@@ -5,7 +5,7 @@ function convertToBool(text, fault = 'true') {
     return text === fault ? true : false;
 }
 module.exports = {
-SESSION_ID: process.env.SESSION_ID || "DML-MD",
+SESSION_ID: process.env.SESSION_ID || "DML-MD~YnEEER5L#oFiiKMpWEYJ0nDVGpa6AU9t-4i9N2r54zFvXU8EOBA4",
 // add your Session Id 
 AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN || "true",
 // make true or false status auto seen
@@ -39,7 +39,7 @@ DELETE_LINKS: process.env.DELETE_LINKS || "false",
 // automatic delete links witho remove member 
 OWNER_NUMBER: process.env.OWNER_NUMBER || "255615752312",
 // add your bot owner number
-OWNER_NAME: process.env.OWNER_NAME || "DML",
+OWNER_NAME: process.env.OWNER_NAME || "Phemous",
 // add bot owner name
 DESCRIPTION: process.env.DESCRIPTION || "*© Powered by DML*",
 // add bot owner name    
@@ -63,15 +63,15 @@ AUTO_STICKER: process.env.AUTO_STICKER || "false",
 // make true for automatic stickers 
 AUTO_REPLY: process.env.AUTO_REPLY || "false",
 // make true or false automatic text reply 
-ALWAYS_ONLINE: process.env.ALWAYS_ONLINE || "false",
+ALWAYS_ONLINE: process.env.ALWAYS_ONLINE || "true",
 // maks true for always online 
 PUBLIC_MODE: process.env.PUBLIC_MODE || "true",
 // make false if want private mod
-AUTO_TYPING: process.env.AUTO_TYPING || "false",
+AUTO_TYPING: process.env.AUTO_TYPING || "true",
 // true for automatic show typing   
 READ_CMD: process.env.READ_CMD || "false",
 // true if want mark commands as read 
-DEV: process.env.DEV || "255615752312",
+DEV: process.env.DEV || "233537299180",
 //replace with your whatsapp number        
 ANTI_VV: process.env.ANTI_VV || "true",
 // true for anti once view 
