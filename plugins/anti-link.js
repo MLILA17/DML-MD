@@ -39,6 +39,7 @@ cmd({
       /https?:\/\/(?:www\.)?vimeo\.com\/\S+/gi,           // Vimeo links
       /https?:\/\/(?:www\.)?dailymotion\.com\/\S+/gi,     // Dailymotion links
       /https?:\/\/(?:www\.)?medium\.com\/\S+/gi           // Medium links
+    
     ];
 
     // Check if message contains any forbidden links

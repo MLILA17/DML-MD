@@ -8,87 +8,93 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { isAdmin, isOwner, participants, reply }) => {
   try {
-    if (!m.isGroup) return reply("❌ PLEASE SELECT TWO DISTINCT GROUPE.")
-    if (!isAdmin && !isOwner) return reply("❌ Seuls les admins peuvent utiliser cette commande.");
+    if (!m.isGroup) return reply("❌ This command only works in groups.");
+    if (!isAdmin && !isOwner) return reply("❌ Only admins can start Squid Game.");
 
-    let groupMembers = participants.filter(p => !p.admin); // Exclure les admins
-    if (groupMembers.length < 5) return reply("⚠️ Il faut au moins 5 membres non-admins pour jouer.");
+    let groupMembers = participants.filter(p => !p.admin); // Exclude admins
+    if (groupMembers.length < 5) return reply("⚠️ At least 5 non-admin members are required to play.");
 
     let gameCreator = "@" + m.sender.split("@")[0];
 
-    // Message d'annonce du jeu
-    let gameMessage = `🔴 *Squid Game: Red Light,🟢Green Light*\n\n🎭 *Front Man*: (${gameCreator})\n`;
+    // Game announcement
+    let gameMessage = `🔴 *Squid Game: Red Light, 🟢 Green Light*\n\n🎭 *Front Man*: (${gameCreator})\n`;
     gameMessage += groupMembers.map(m => "@" + m.id.split("@")[0]).join("\n") + "\n\n";
-    gameMessage += "Tous les autres membres du groupe sont ajoutés comme joueurs ! Le jeu commence dans 50 secondes.";
+    gameMessage += "All group members are added as players! The game starts in 50 seconds.";
 
     await conn.sendMessage(m.chat, { text: gameMessage, mentions: groupMembers.map(m => m.id) });
 
-    await delay(50000); // Attente de 50s avant de sélectionner les joueurs
+    await delay(50000); // Wait 50 seconds before starting
 
-    // Sélectionner 50 joueurs aléatoires
+    // Randomly select 5 players
     let players = groupMembers.sort(() => 0.5 - Math.random()).slice(0, 5);
-
     let playersList = players.map((p, i) => `${i + 1}. @${p.id.split("@")[0]}`).join("\n");
 
     await conn.sendMessage(m.chat, {
-      text: `🎮 *Liste des joueurs:*\n${playersList}\n\n🔔 Le jeu commence maintenant !`,
+      text: `🎮 *Selected Players:*\n${playersList}\n\n🔔 The game starts now!`,
       mentions: players.map(p => p.id)
     });
 
     await delay(3000);
 
-    // Explication des règles
-    let rulesMessage = `📜 Rules of the Squid Game 🦑
+    // Rules
+    let rulesMessage = `📜 Rules of Squid Game 🦑
 
-1️⃣ During 🟥 Red Light, any player who sends a message will be REMOVED and KICKED OUT of the group.
+1️⃣ During 🟥 Red Light, anyone who sends a message will be REMOVED.
 
-2️⃣ During 🟩 Green Light, players MUST send a message. Those who stay silent will be ELIMINATED from the game.
+2️⃣ During 🟩 Green Light, players MUST send a message. Staying silent = ELIMINATION.
 
-3️⃣ 🛑 The game ends when only one player remains.
+3️⃣ 🛑 The game continues until only one player remains.
 
-🏆 Survive to the end to become the TRUE WINNER! 🎉`;
+🏆 Survive to the end and you WIN! 🎉`;
 
     await conn.sendMessage(m.chat, { text: rulesMessage });
 
     await delay(5000);
 
     let remainingPlayers = [...players];
+
+    // Game Loop
     while (remainingPlayers.length > 1) {
       let isGreenLight = Math.random() > 0.5;
       let lightMessage = isGreenLight ? "🟩 *Green Light*" : "🟥 *Red Light*";
+
       await conn.sendMessage(m.chat, { text: `🔔 ${lightMessage}` });
 
-      await delay(5000); // Délai de 5s entre chaque phase
+      // Collect messages for 5 seconds
+      let spokenPlayers = new Set();
+      const listener = (msg) => {
+        try {
+          let sender = msg.messages[0].key.participant || msg.messages[0].key.remoteJid;
+          if (remainingPlayers.find(p => p.id === sender)) {
+            spokenPlayers.add(sender);
+          }
+        } catch (e) {}
+      };
+
+      conn.ev.on("messages.upsert", listener);
+      await delay(5000);
+      conn.ev.off("messages.upsert", listener); // remove listener after round
 
       let playersToKick = [];
-      let spokenPlayers = new Set(); // Stocke ceux qui ont parlé
-
-      conn.ev.on("messages.upsert", (msg) => {
-        let sender = msg.messages[0].key.remoteJid;
-        if (remainingPlayers.find(p => p.id === sender)) spokenPlayers.add(sender);
-      });
 
       if (isGreenLight) {
-        // Vérifier qui ne parle pas
+        // Eliminate silent players
         for (let player of remainingPlayers) {
-          if (!spokenPlayers.has(player.id)) {
-            playersToKick.push(player);
-          }
+          if (!spokenPlayers.has(player.id)) playersToKick.push(player);
         }
       } else {
-        // Vérifier qui parle
+        // Eliminate those who talked
         for (let player of remainingPlayers) {
-          if (spokenPlayers.has(player.id)) {
-            playersToKick.push(player);
-          }
+          if (spokenPlayers.has(player.id)) playersToKick.push(player);
         }
       }
 
+      // Kick eliminated players
       for (let player of playersToKick) {
         await conn.groupParticipantsUpdate(m.chat, [player.id], "remove");
         let eliminationMessage = isGreenLight
-          ? `❌ @${player.id.split("@")[0]} remained silent during 🟩 Green Light and was eliminated and removed from the group`
-          : `❌ @${player.id.split("@")[0]} wrote during 🟥 Red Light and was eliminated and removed from the group`;
+          ? `❌ @${player.id.split("@")[0]} stayed silent during 🟩 Green Light and was ELIMINATED.`
+          : `❌ @${player.id.split("@")[0]} talked during 🟥 Red Light and was ELIMINATED.`;
 
         await conn.sendMessage(m.chat, {
           text: eliminationMessage,
@@ -96,34 +102,36 @@ cmd({
         });
       }
 
+      // Update remaining players
       remainingPlayers = remainingPlayers.filter(p => !playersToKick.includes(p));
     }
 
+    // Announce winner
     if (remainingPlayers.length === 1) {
       await conn.sendMessage(m.chat, {
-        text: `🏆 *Félicitations @${remainingPlayers[0].id.split("@")[0]} !*\nTu as survécu et remporté le Squid Game ! 🎉`,
+        text: `🏆 *Congratulations @${remainingPlayers[0].id.split("@")[0]} !*\nYou survived and WON the Squid Game! 🎉`,
         mentions: [remainingPlayers[0].id]
       });
     }
+
   } catch (error) {
-    console.error("❌ Error in the .squidgame command:", error);
-    reply("❌ ❌ An error occurred while starting the Squid Game.");
+    console.error("❌ Error in .squidgame command:", error);
+    reply("❌ An error occurred while running Squid Game.");
   }
 });
-
 cmd({
     pattern: "konami",
-    desc: "Simulate a match between two teams and choose a winner randomly after 30 seconds.",
+    desc: "Simulate a football match between two teams and randomly choose a winner after 30 seconds.",
     category: "game",
     react: "⚽",
     filename: __filename,
     use: ".konami"
 }, async (conn, mek, m, { from, sender, reply }) => {
     try {
-      // Liste étendue des clubs et équipes internationales avec leurs emojis
+      // Extended list of clubs and international teams with their emojis
         const teams = [
             "Real Madrid 🇪🇸",
-            "FC Barcelone 🇪🇸",
+            "FC Barcelona 🇪🇸",
             "Manchester United 🇬🇧",
             "Liverpool FC 🇬🇧",
             "Bayern Munich 🇩🇪",
@@ -134,11 +142,11 @@ cmd({
             "Inter Milan 🇮🇹",
             "Chelsea FC 🇬🇧",
             "Borussia Dortmund 🇩🇪",
-            "Cameroun 🇨🇲",
-            "Côte D'Ivoire 🇨🇮",
+            "Cameroon 🇨🇲",
+            "Ivory Coast 🇨🇮",
             "Tottenham Hotspur 🇬🇧",
-            "Sénégal 🇸🇳",
-            "RDC 🇨🇩",
+            "Senegal 🇸🇳",
+            "DR Congo 🇨🇩",
             "Congo 🇨🇬",
             "Ajax Amsterdam 🇳🇱",
             "FC Porto 🇵🇹",
@@ -170,31 +178,32 @@ cmd({
             "Mexico 🇲🇽",
             "Uruguay 🇺🇾",
             "USA 🇺🇸"
-            // Ajoutez d'autres équipes si nécessaire
         ];
 
-        // Sélection aléatoire de deux équipes différentes
+        // Random selection of two different teams
         const team1 = teams[Math.floor(Math.random() * teams.length)];
         let team2 = teams[Math.floor(Math.random() * teams.length)];
         while (team2 === team1) {
             team2 = teams[Math.floor(Math.random() * teams.length)];
         }
 
-        // Annonce du match versus
+        // Match announcement
         const announcement = `⚽ *Match Versus*\n\n${team1} 🆚 ${team2}\n\n@${sender.split("@")[0]}, Choose the winner! You have 30 seconds to decide.`;
         await reply(announcement, { mentions: [sender] });
 
-        // Attendre 30 secondes
+        // Wait 30 seconds
         await new Promise(resolve => setTimeout(resolve, 30000));
 
-        // Choix aléatoire du gagnant parmi les deux équipes
+        // Randomly choose the winner
         const chosenTeam = Math.random() < 0.5 ? team1 : team2;
 
-        // Message final annonçant le gagnant
-        const resultMessage = `🏆 *Match Result*\n\nThe winner is : ${chosenTeam}🥳\n\n> Here is the result 😎 😎 @${sender.split("@")[0]} !`;
+        // Final message announcing the winner
+        const resultMessage = `🏆 *Match Result*\n\nThe winner is: ${chosenTeam} 🥳\n\n> Here is the result 😎 @${sender.split("@")[0]} !`;
         await reply(resultMessage, { mentions: [sender] });
     } catch (error) {
         console.error("Error in konami command:", error);
         reply("❌ An error occurred while executing the konami command.");
     }
 });
+
+
