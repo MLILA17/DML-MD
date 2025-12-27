@@ -3,7 +3,6 @@
   "version": "3.0.0",
   "description": "A WhatsApp Bot Created By Dml",
   "main": "index.js",
-  "type": "module", 
   "scripts": {
     "start": "pm2 start index.js --deep-monitoring --attach --name DML-MD",
     "stop": "pm2 stop DML-MD",
@@ -50,7 +49,6 @@
     "api-dylux": "1.8.5",
     "@mrnima/tiktok-downloader": "1.0.0",
     "@mrnima/facebook-downloader": "1.0.0",
-    "mrnima-moviedl": "1.0.0",
-    "gifted-btns": "^1.0.0"
+    "mrnima-moviedl": "1.0.0"
   }
 }
