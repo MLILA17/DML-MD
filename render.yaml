@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: DML-MDMD
+    env: node
+    plan: free
+    repo: https://github.com/MLILA17/DML-MD
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: SESSION_ID
+        sync: false  # Don't include the value here, will be entered manually on Render
+      - key: OWNER_NUMBER
+        sync: false
