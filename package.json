@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "description": "A WhatsApp Bot Created By Dml",
   "main": "index.js",
+  "type": "module", 
   "scripts": {
     "start": "pm2 start index.js --deep-monitoring --attach --name DML-MD",
     "stop": "pm2 stop DML-MD",
