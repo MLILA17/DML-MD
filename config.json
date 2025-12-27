@@ -1,9 +1,0 @@
-{
-  "gemini": {
-    "enabledGlobally": true,
-    "enabledChats": {
-      "groupId1": true,
-      "dmId2": true
-    }
-  }
-}
