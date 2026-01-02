@@ -133,5 +133,5 @@
 ---
 
 <p align="center">
-  <b>⭐ DML-MD | All rights reserved © 2025</b>
+  <b>⭐ DML-MD | All rights reserved © 2026</b>
 </p>
