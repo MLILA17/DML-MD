@@ -1,5 +1,5 @@
-// Secured by Fredi AI
+// Secured by Dml
 // Fredi AI Protection Layer
-require("./Fredi/index.js"); // Fredi AI
-// Fredi AI Obfuscation Complete
-// Protected by Fredi AI - 2026, 12:29:58 PM
+require("./Fredi/index.js"); // DML
+// Dml Obfuscation Complete
+// Protected by Dml - 2026, 12:29:58 PM
