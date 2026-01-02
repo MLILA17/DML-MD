@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee-Xmd Dashboard | Advanced WhatsApp Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0a1a2f;
+            --primary-blue: #1e3a8a;
+            --cyber-cyan: #00bcd4;
+            --cyber-purple: #8a2be2;
+            --cyber-green: #00ff88;
+            --cyber-red: #ff0055;
+            --cyber-yellow: #ffcc00;
+            --text-light: #e0e7ff;
+            --text-dim: #a0b3e0;
+            --card-bg: rgba(10, 26, 47, 0.85);
+            --glow-cyan: 0 0 15px rgba(0, 188, 212, 0.5);
+            --glow-purple: 0 0 15px rgba(138, 43, 226, 0.5);
+            --glow-green: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: radial-gradient(circle at top right, #0a1a2f, #000814),
+                        linear-gradient(45deg, #0a1a2f 0%, #1e3a8a 50%, #000814 100%);
+            background-attachment: fixed;
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 188, 212, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 188, 212, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* HEADER SECTION */
+        .header {
+            background: linear-gradient(90deg, rgba(10, 26, 47, 0.9), rgba(30, 58, 138, 0.9));
+            border-bottom: 2px solid var(--cyber-cyan);
+            box-shadow: var(--glow-cyan);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            box-shadow: var(--glow-cyan);
+        }
+        
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-green), var(--cyber-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 18px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(0, 188, 212, 0.2);
+            color: var(--cyber-cyan);
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--cyber-cyan);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover::after {
+            width: 80%;
+        }
+        
+        /* MAIN CONTAINER */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            margin-bottom: 50px;
+            background: rgba(10, 26, 47, 0.7);
+            border: 2px solid var(--cyber-cyan);
+            border-radius: 20px;
+            box-shadow: var(--glow-cyan);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 188, 212, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+        
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-green), var(--cyber-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(0, 188, 212, 0.5);
+        }
+        
+        .hero-subtitle {
+            font-size: 22px;
+            color: var(--text-dim);
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--cyber-green);
+            margin-top: 20px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--cyber-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyber-green);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* ABOUT US SECTION */
+        .about-section {
+            margin-bottom: 60px;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: var(--cyber-cyan);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-purple));
+            border-radius: 2px;
+        }
+        
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .about-card {
+            background: var(--card-bg);
+            border: 1px solid var(--cyber-cyan);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--glow-cyan);
+            transition: transform 0.3s ease;
+        }
+        
+        .about-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .about-card h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: var(--cyber-green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .about-card p {
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+        
+        /* CATEGORIES SECTION */
+        .categories-section {
+            margin-bottom: 60px;
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .category-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-purple));
+        }
+        
+        .category-card:nth-child(3n+1)::before { background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-green)); }
+        .category-card:nth-child(3n+2)::before { background: linear-gradient(90deg, var(--cyber-purple), var(--cyber-red)); }
+        .category-card:nth-child(3n+3)::before { background: linear-gradient(90deg, var(--cyber-green), var(--cyber-yellow)); }
+        
+        .category-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--cyber-cyan);
+        }
+        
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--cyber-cyan);
+        }
+        
+        .category-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+        
+        .category-desc {
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+        
+        .features-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .features-list li {
+            padding: 5px 0;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .features-list li::before {
+            content: '▸';
+            color: var(--cyber-green);
+            font-weight: bold;
+        }
+        
+        /* PROJECTS SHOWCASE */
+        .projects-section {
+            margin-bottom: 60px;
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .project-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--glow-cyan);
+            border-color: var(--cyber-cyan);
+        }
+        
+        .project-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 188, 212, 0.2);
+        }
+        
+        .project-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--cyber-cyan);
+            margin-bottom: 5px;
+        }
+        
+        .project-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(0, 188, 212, 0.2);
+            color: var(--cyber-cyan);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .project-body {
+            padding: 20px;
+        }
+        
+        .project-desc {
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        
+        .project-stats {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cyber-green);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        
+        /* CONTACT & SOCIAL */
+        .contact-section {
+            margin-bottom: 60px;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+        }
+        
+        .contact-form {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid var(--cyber-cyan);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-family: 'Roboto', sans-serif;
+            transition: border 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--cyber-cyan);
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-purple));
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
+        }
+        
+        .social-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .social-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .social-card:hover {
+            border-color: var(--cyber-cyan);
+            transform: translateY(-5px);
+        }
+        
+        .social-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: var(--cyber-cyan);
+        }
+        
+        .social-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+        
+        /* FOOTER */
+        .footer {
+            background: rgba(10, 26, 47, 0.9);
+            border-top: 2px solid var(--cyber-cyan);
+            padding: 40px 0;
+            text-align: center;
+            margin-top: 60px;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--cyber-cyan);
+        }
+        
+        .copyright {
+            color: var(--text-dim);
+            font-size: 15px;
+        }
+        
+        .copyright span {
+            color: var(--cyber-cyan);
+            font-weight: 700;
+        }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1200px) {
+            .main-container {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .about-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .section-title {
+                font-size: 30px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                padding: 15px 20px;
+            }
+            
+            .nav-links {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .categories-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h1 {
+                font-size: 30px;
+            }
+            
+            .hero-subtitle {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 15px;
+            }
+            
+            .category-card, .project-card, .about-card {
+                padding: 20px;
+            }
+            
+            .hero {
+                padding: 40px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">FX</div>
+            <div class="logo-text">FEE-XMD</div>
+        </div>
+        
+        <nav class="nav-links">
+            <a href="#home"><i class="fas fa-home"></i> Home</a>
+            <a href="#about"><i class="fas fa-info-circle"></i> About</a>
+            <a href="#categories"><i class="fas fa-layer-group"></i> Categories</a>
+            <a href="#projects"><i class="fas fa-project-diagram"></i> Projects</a>
+            <a href="#contact"><i class="fas fa-envelope"></i> Contact</a>
+        </nav>
+    </header>
+    
+    <!-- MAIN CONTENT -->
+    <main class="main-container">
+        <!-- HERO SECTION -->
+        <section id="home" class="hero">
+            <h1>FEE-XMD WHATSAPP BOT DASHBOARD</h1>
+            <p class="hero-subtitle">Advanced multi-featured WhatsApp automation system with AI capabilities, media processing, and 500+ commands for seamless messaging experience.</p>
+            
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>SYSTEM STATUS: <strong>OPERATIONAL</strong></span>
+            </div>
+        </section>
+        
+        <!-- ABOUT US SECTION -->
+        <section id="about" class="about-section">
+            <h2 class="section-title">About Fee-Xmd</h2>
+            
+            <div class="about-content">
+                <div class="about-card">
+                    <h3><i class="fas fa-rocket"></i> Our Mission</h3>
+                    <p>Fee-Xmd aims to revolutionize WhatsApp automation by providing a comprehensive, feature-rich bot solution that combines AI intelligence with practical utilities. We're committed to delivering cutting-edge technology that enhances digital communication and productivity.</p>
+                </div>
+                
+                <div class="about-card">
+                    <h3><i class="fas fa-bullseye"></i> Our Vision</h3>
+                    <p>To become the leading WhatsApp automation platform in Africa and beyond, empowering developers and users with tools that simplify complex tasks while maintaining security, reliability, and exceptional user experience.</p>
+                </div>
+            </div>
+            
+            <div class="about-card">
+                <h3><i class="fas fa-chart-line"></i> Why Choose Fee-Xmd?</h3>
+                <p>With over 500+ commands, AI integration, media processing capabilities, and continuous updates, Fee-Xmd offers the most comprehensive WhatsApp automation solution available. Our system is built with scalability in mind, ensuring it grows with your needs while maintaining top performance and reliability.</p>
+                
+                <div class="features-list">
+                    <li>24/7 Active Development & Support</li>
+                    <li>Regular Feature Updates & Security Patches</li>
+                    <li>Multi-language Support & Customization</li>
+                    <li>Comprehensive Documentation & Community</li>
+                    <li>Enterprise-grade Security Protocols</li>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CATEGORIES SECTION - 20+ CATEGORIES -->
+        <section id="categories" class="categories-section">
+            <h2 class="section-title">Feature Categories (25+)</h2>
+            
+            <div class="categories-grid">
+                <!-- AI & Intelligence -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-robot"></i></div>
+                    <h3 class="category-title">AI & Intelligence</h3>
+                    <p class="category-desc">Advanced AI models including GPT-4, Gemini, Groq, and custom AI for chat, code generation, image analysis, and transcription services.</p>
+                    <ul class="features-list">
+                        <li>GPT-4 & ChatGPT Integration</li>
+                        <li>Google Gemini AI</li>
+                        <li>Image Recognition & Analysis</li>
+                        <li>Code Generation & Debugging</li>
+                        <li>Voice Transcription</li>
+                    </ul>
+                </div>
+                
+                <!-- Media Processing -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-photo-video"></i></div>
+                    <h3 class="category-title">Media Processing</h3>
+                    <p class="category-desc">Comprehensive media tools for downloading, editing, converting, and enhancing images, videos, and audio files from multiple platforms.</p>
+                    <ul class="features-list">
+                        <li>YouTube/Instagram/TikTok Downloader</li>
+                        <li>Image Editing & Filters</li>
+                        <li>Video Conversion & Compression</li>
+                        <li>Background Removal & Enhancement</li>
+                        <li>Audio Extraction & Processing</li>
+                    </ul>
+                </div>
+                
+                <!-- Utilities -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-tools"></i></div>
+                    <h3 class="category-title">Utilities & Tools</h3>
+                    <p class="category-desc">Essential tools for daily tasks including file conversion, text processing, calculations, and system utilities for enhanced productivity.</p>
+                    <ul class="features-list">
+                        <li>File Format Conversion</li>
+                        <li>Text Encryption/Decryption</li>
+                        <li>QR Code Generation</li>
+                        <li>Unit & Currency Conversion</li>
+                        <li>System Monitoring Tools</li>
+                    </ul>
+                </div>
+                
+                <!-- Social & Communication -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-comments"></i></div>
+                    <h3 class="category-title">Social & Communication</h3>
+                    <p class="category-desc">Enhanced WhatsApp features including group management, auto-replies, message scheduling, and advanced chat functionalities.</p>
+                    <ul class="features-list">
+                        <li>Group Management & Moderation</li>
+                        <li>Auto-Reply & Chatbot</li>
+                        <li>Message Broadcasting</li>
+                        <li>Chat Analysis & Statistics</li>
+                        <li>Multi-language Support</li>
+                    </ul>
+                </div>
+                
+                <!-- Entertainment -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-gamepad"></i></div>
+                    <h3 class="category-title">Entertainment</h3>
+                    <p class="category-desc">Fun and engaging features including games, meme generation, jokes, trivia, and interactive content for enhanced user engagement.</p>
+                    <ul class="features-list">
+                        <li>Interactive Games & Quizzes</li>
+                        <li>Meme Generator & Editor</li>
+                        <li>Jokes & Fun Facts</li>
+                        <li>Music & Audio Player</li>
+                        <li>Anime & Movie Database</li>
+                    </ul>
+                </div>
+                
+                <!-- Education -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <h3 class="category-title">Education & Learning</h3>
+                    <p class="category-desc">Educational tools including language translation, dictionary, encyclopedia access, coding tutorials, and academic resources.</p>
+                    <ul class="features-list">
+                        <li>Multi-language Translation</li>
+                        <li>Wikipedia & Dictionary</li>
+                        <li>Coding Tutorials & Examples</li>
+                        <li>Academic Calculator</li>
+                        <li>Research & Reference Tools</li>
+                    </ul>
+                </div>
+                
+                <!-- Productivity -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-briefcase"></i></div>
+                    <h3 class="category-title">Productivity</h3>
+                    <p class="category-desc">Business and productivity tools including task management, reminders, note-taking, calendar integration, and workflow automation.</p>
+                    <ul class="features-list">
+                        <li>Task Manager & To-Do Lists</li>
+                        <li>Reminder & Alarm System</li>
+                        <li>Note-taking & Organization</li>
+                        <li>Calendar & Schedule Management</li>
+                        <li>Workflow Automation</li>
+                    </ul>
+                </div>
+                
+                <!-- Security -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3 class="category-title">Security & Privacy</h3>
+                    <p class="category-desc">Advanced security features including message encryption, anti-spam, user verification, privacy controls, and secure data handling.</p>
+                    <ul class="features-list">
+                        <li>End-to-End Encryption</li>
+                        <li>Anti-Spam & Anti-Virus</li>
+                        <li>User Authentication</li>
+                        <li>Privacy Controls</li>
+                        <li>Secure Backup & Recovery</li>
+                    </ul>
+                </div>
+                
+                <!-- Development -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-code"></i></div>
+                    <h3 class="category-title">Development</h3>
+                    <p class="category-desc">Developer tools including code execution, API testing, debugging, version control, and deployment automation for software projects.</p>
+                    <ul class="features-list">
+                        <li>Code Execution (Python, JS, Java, C++)</li>
+                        <li>API Testing & Debugging</li>
+                        <li>Git Integration</li>
+                        <li>Package Management</li>
+                        <li>Deployment Automation</li>
+                    </ul>
+                </div>
+                
+                <!-- Customization -->
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-palette"></i></div>
+                    <h3 class="category-title">Customization</h3>
+                    <p class="category-desc">Personalization options including themes, plugins, custom commands, interface modification, and user preference settings.</p>
+                    <ul class="features-list">
+                        <li>Themes & UI Customization</li>
+                        <li>Plugin System</li>
+                        <li>Custom Command Creation</li>
+                        <li>Notification Preferences</li>
+                        <li>User Profile Customization</li>
+                    </ul>
+                </div>
+                
+                <!-- More categories would continue here... -->
+                
+            </div>
+        </section>
+        
+        <!-- PROJECTS SHOWCASE -->
+        <section id="projects" class="projects-section">
+            <h2 class="section-title">Our Projects</h2>
+            
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3 class="project-title">Fee-Xmd WhatsApp Bot</h3>
+                        <div>
+                            <span class="project-tag">Active</span>
+                            <span class="project-tag">JavaScript</span>
+                            <span class="project-tag">Node.js</span>
+                        </div>
+                    </div>
+                    <div class="project-body">
+                        <p class="project-desc">The flagship WhatsApp automation bot with 500+ commands, AI integration, and multi-platform support. Continuously updated with new features and security enhancements.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-value">500+</div>
+                                <div class="stat-label">Commands</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">25+</div>
+                                <div class="stat-label">Categories</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">10K+</div>
+                                <div class="stat-label">Users</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3 class="project-title">Fee-Xmd AI Studio</h3>
+                        <div>
+                            <span class="project-tag">Development</span>
+                            <span class="project-tag">AI/ML</span>
+                            <span class="project-tag">Python</span>
+                        </div>
+                    </div>
+                    <div class="project-body">
+                        <p class="project-desc">Advanced AI platform integrating multiple AI models for chat, image generation, code assistance, and voice processing with custom training capabilities.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-value">7</div>
+                                <div class="stat-label">AI Models</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">50+</div>
+                                <div class="stat-label">Tools</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">95%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3 class="project-title">Fee-Xmd Media Suite</h3>
+                        <div>
+                            <span class="project-tag">Beta</span>
+                            <span class="project-tag">FFmpeg</span>
+                            <span class="project-tag">ImageMagick</span>
+                        </div>
+                    </div>
+                    <div class="project-body">
+                        <p class="project-desc">Comprehensive media processing toolkit for editing, converting, enhancing, and managing images, videos, and audio files across multiple formats.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-value">30+</div>
+                                <div class="stat-label">Formats</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">40+</div>
+                                <div class="stat-label">Filters</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">Fast</div>
+                                <div class="stat-label">Processing</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CONTACT SECTION -->
+        <section id="contact" class="contact-section">
+            <h2 class="section-title">Contact & Connect</h2>
+            
+            <div class="contact-grid">
+                <div class="contact-form">
+                    <h3 style="color: var(--cyber-cyan); margin-bottom: 20px;">Send Us a Message</h3>
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Your Name</label>
+                            <input type="text" id="name" class="form-control" placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" class="form-control" placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Your Message</label>
+                            <textarea id="message" class="form-control" rows="5" placeholder="Tell us about your project or inquiry"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="social-links">
+                    <div class="social-card">
+                        <div class="social-icon"><i class="fab fa-github"></i></div>
+                        <h3 class="social-title">GitHub</h3>
+                        <p>Explore our code, contribute, or report issues.</p>
+                        <a href="https://github.com/Fred1e/Fee-Xmd" target="_blank" class="btn" style="margin-top: 15px; width: 100%;">
+                            <i class="fab fa-github"></i> Visit GitHub
+                        </a>
+                    </div>
+                    
+                    <div class="social-card">
+                        <div class="social-icon"><i class="fab fa-whatsapp"></i></div>
+                        <h3 class="social-title">WhatsApp</h3>
+                        <p>Direct contact for support and inquiries.</p>
+                        <a href="https://wa.me/255752593977" target="_blank" class="btn" style="margin-top: 15px; width: 100%; background: linear-gradient(90deg, #25D366, #128C7E);">
+                            <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+            <a href="#categories">Features</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+            <a href="https://github.com/Fred1e/Fee-Xmd" target="_blank">GitHub</a>
+            <a href="https://wa.me/255752593977" target="_blank">Support</a>
+        </div>
+        
+        <p class="copyright">
+            © <script>document.write(new Date().getFullYear());</script> <span>Fee-Xmd</span>. All rights reserved. | 
+            Advanced WhatsApp Automation System
+        </p>
+    </footer>
+    
+    <script>
+        // Simple form submission handling
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            
+            if(name && email && message) {
+                alert(`Thank you, ${name}! Your message has been received. We'll contact you at ${email} soon.`);
+                document.getElementById('contactForm').reset();
+            } else {
+                alert('Please fill in all fields before submitting.');
+            }
+        });
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if(targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if(targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Add animation to category cards on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all category cards
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

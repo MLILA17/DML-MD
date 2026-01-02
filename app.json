@@ -1,0 +1,52 @@
+{
+  "name": "FEE-X MULTI DEVICE",
+  "description": "⚡ A lightning-fast WhatsApp bot with multi-device support, built on Node.js & Baileys.",
+  "website": "https://github.com/Fred1e/Fee-Xmd#readme",
+  "repository": "https://github.com/Fred1e/Fee-Xmd.git",
+  "logo": "https://files.catbox.moe/w2axzk.jpg",
+  "success_url": "/",
+  "keywords": ["whatsapp-bot", "baileys", "nodejs", "heroku", "fee-xmd"],
+  "scripts": {
+    "postdeploy": "echo '🚀 Fee-Xmd has been successfully deployed!'"
+  },
+  "build": {
+    "languages": ["nodejs"]
+  },
+
+  "env": {
+    "SESSION": {
+      "description": "🔑 Required – Your WhatsApp session ID (generated after linking the bot).",
+      "required": true
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Optional – The Heroku app name (needed for updating the bot).",
+      "required": false
+    },
+    "HEROKU_API_KEY": {
+      "description": "Optional – Your Heroku API key (only needed for updating the bot).",
+      "required": false
+    }
+  },
+
+  "addons": [
+    {
+      "plan": "heroku-postgresql",
+      "description": "🗃️ Free PostgreSQL database for storing bot data."
+    }
+  ],
+
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs",
+      "description": "📦 Node.js runtime for running the bot."
+    },
+    {
+      "url": "https://github.com/clhuang/heroku-buildpack-webp-binaries.git",
+      "description": "🖼️ WebP support for image processing."
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest",
+      "description": "🎥 FFmpeg for audio/video processing."
+    }
+  ]
+}
