@@ -21,7 +21,7 @@
     "whatsapp-multi-device"
   ],
   "base": "https://github.com/MLILA17/DML-MD",
-  "author": "Fredie",
+  "author": "Dml",
   "license": "MIT",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
