@@ -18,11 +18,11 @@ module.exports = async (context) => {
                     await m.reply(`◈┈┈┈┈┈┈┈┈┈┈┈┈◈\n❒ Group name slammed to "${newText}"! Let’s keep the chaos going! 😈\n◈┈┈┈┈┈┈┈┈┈┈┈┈◈`, {
                         contextInfo: {
                             externalAdReply: {
-                                title: `🄵🄴🄴-🅇🄼🄳`,
+                                title: `DML-MD`,
                                 body: `Group Update`,
                                 previewType: "PHOTO",
                                 thumbnail: pict,
-                                sourceUrl: 'https://github.com/Fred1e/Fee-Xmd'
+                                sourceUrl: 'https://github.com/MLILA17/DML-MD
                             }
                         }
                     });
@@ -40,11 +40,11 @@ module.exports = async (context) => {
                     await m.reply('◈┈┈┈┈┈┈┈┈┈┈┈┈◈\n❒ Group description updated! Time to flex that new vibe! 🔥\n◈┈┈┈┈┈┈┈┈┈┈┈┈◈', {
                         contextInfo: {
                             externalAdReply: {
-                                title: `🄵🄴🄴-🅇🄼🄳`,
+                                title: `DML-MD`,
                                 body: `Group Update`,
                                 previewType: "PHOTO",
                                 thumbnail: pict,
-                                sourceUrl: 'https://github.com/Fred1e/Fee-Xmd'
+                                sourceUrl: 'https://github.com/MLILA17/DML-MD'
                             }
                         }
                     });
@@ -61,14 +61,14 @@ module.exports = async (context) => {
                 try {
                     const restrict = action === 'on';
                     await client.groupSettingUpdate(m.chat, restrict ? 'locked' : 'unlocked');
-                    await m.reply(`◈┈┈┈┈┈┈┈┈┈┈┈┈◈\n❒ Group editing is now ${restrict ? 'locked to admins only' : 'open to all members'}! Keep it toxic! 😎\n◈┈┈┈┈┈┈┈┈┈┈┈┈◈`, {
+                    await m.reply(`◈┈┈┈┈┈┈┈┈┈┈┈┈◈\n❒ Group editing is now ${restrict ? 'locked to admins only' : 'open to all members'}! Keep it Dml! 😎\n◈┈┈┈┈┈┈┈┈┈┈┈┈◈`, {
                         contextInfo: {
                             externalAdReply: {
-                                title: `🄵🄴🄴-🅇🄼🄳`,
+                                title: `DML-MD`,
                                 body: `Group Update`,
                                 previewType: "PHOTO",
                                 thumbnail: pict,
-                                sourceUrl: 'https://github.com/Fred1e/Fee-Xmd'
+                                sourceUrl: 'https://github.com/MLILA17/DML-MD'
                             }
                         }
                     });
