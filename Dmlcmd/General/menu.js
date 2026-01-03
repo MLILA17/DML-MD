@@ -16,7 +16,7 @@ module.exports = {
             await client.sendMessage(  
                 m.chat,  
                 {  
-                    text: `╭┈┈┈┈━━━━━━┈┈┈┈◈◈\n│❒ Yo \( {m.pushName}, what's with the extra bullshit? Just say * \){prefix}menu*, moron. \n┗━━━━━━━━━━━━━━━┛`,  
+                    text: `╭┈┈┈┈━━━━━━┈┈┈┈◈◈\n│❒ Hi \( {m.pushName}, what's with the extra bullshit? Just say * \){prefix}menu*, moron. \n┗━━━━━━━━━━━━━━━┛`,  
                 },  
                 { quoted: m, ad: true }  
             );  
@@ -42,12 +42,12 @@ module.exports = {
         const menuText = `◈━┈┈┈┈┈┈┈┈┈┈┈┈┈┈━◈\n│❒ *( 💬 ) - Hello, @${m.pushName}* Welcome to the bots Menu\n\n` +   
             `- BOT INFORMATION✓\n\n` +  
             ` *BOT*: \n` +  
-            `🄵🄴🄴-🅇🄼🄳 (bow down)\n` +  
+            `DML-MD (bow down)\n` +  
 
             ` *PREFIX*: \n` +  
             `${effectivePrefix} (learn it, dumbass)\n` +  
 
-            `⌬ *Mσԃҽ*: \n` +  
+            `⌬ *MODE*: \n` +  
             `${mode} ( ! )\n` +  
 
             `\n◈━┈┈┈┈┈┈┈┈┈┈┈┈┈┈━◈\n\n` +  
@@ -149,7 +149,7 @@ module.exports = {
                     contextInfo: {  
                         externalAdReply: {  
                             title: `${botname}`,  
-                            body: `Yo, ${m.pushName}! Ready to fuck shit up?`,  
+                            body: `Hi, ${m.pushName}! How are you`,  
                             mediaType: 1,  
                             thumbnail: pict,  
                             mediaUrl: '',  
@@ -166,9 +166,9 @@ module.exports = {
         await client.relayMessage(m.chat, msg.message, { messageId: msg.key.id });  
 
         const xhClintonPaths = [
-            path.join(__dirname, 'Daudi_Musa'),
-            path.join(process.cwd(), 'Daudi_Musa'),
-            path.join(__dirname, '..', 'Daudi_Musa')
+            path.join(__dirname, 'daudi_musa'),
+            path.join(process.cwd(), 'daudi_musa'),
+            path.join(__dirname, '..', 'daudi_musa')
         ];
 
         let audioFolder = null;
