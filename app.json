@@ -1,9 +1,9 @@
 {
   "name": "DML MULTI DEVICE",
   "description": "⚡ A lightning-fast WhatsApp bot with multi-device support, built on Node.js & Baileys.",
-  "website": "https://github.com/Fred1e/Fee-Xmd#readme",
+  "website": "https://github.com/MLILA17/DML-MD#readme",
   "repository": "https://github.com/MLILA17/DML-MD.git",
-  "logo": "https://files.catbox.moe/w2axzk.jpg",
+  "logo": "https://on.bwmxmd.co.ke/ipcon8.jpg",
   "success_url": "/",
   "keywords": ["whatsapp-bot", "baileys", "nodejs", "heroku", "DML-MD"],
   "scripts": {
