@@ -6,7 +6,7 @@ module.exports = async (context) => {
 
         const { getBinaryNodeChild, getBinaryNodeChildren } = require('@whiskeysockets/baileys');
 
-        if (!text) return m.reply("provide number to be added in this format.\n\nadd 255752593977");
+        if (!text) return m.reply("provide number to be added in this format.\n\nadd 255622220680");
 
         const _participants = participants.map((user) => user.id);
 
