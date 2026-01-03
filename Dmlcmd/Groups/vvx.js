@@ -23,7 +23,7 @@ module.exports = async (context) => {
         const buffer = fs.readFileSync(returnedPath);
         const chatId = m.chat || client.user?.id;
         
-        const caption = `🥀\n—\n🄵🄴🄴-🅇🄼🄳`;
+        const caption = `🥀\n—\nDML-MD`;
 
         if (imageMsg) {
             await client.sendMessage(chatId, { image: buffer, caption }, { quoted: m });
