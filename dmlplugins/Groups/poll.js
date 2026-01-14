@@ -4,13 +4,13 @@ module.exports = async (context) => {
     await middleware(context, async () => {
         const { client, m, args, text } = context;
         
-        if (!text || !text.includes('|')) {
+        if (!text || !text.includes(',')) {
             return client.sendMessage(m.chat, {
-                text: "Usage: !poll <question> | option1 | option2 | option3...\nExample: !poll Best color? | Red | Blue | Green"
+                text: "Usage: !poll <question> , option1 , option2 , option3...\nExample: !poll Best color? , Red , Blue , Green"
             }, { quoted: m });
         }
         
-        const parts = text.split('|').map(p => p.trim());
+        const parts = text.split(',').map(p => p.trim());
         const question = parts[0];
         const options = parts.slice(1);
         
