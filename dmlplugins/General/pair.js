@@ -1,77 +1,99 @@
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
 module.exports = {
-  name: 'checkid',
-  aliases: ['cekid', 'getid', 'id'],
-  description: 'Get the JID of a WhatsApp group or channel from its invite link',
-  run: async (context) => {
-    const { client, m, prefix, botname } = context;
+    name: 'pair',
+    aliases: ['code', 'session', 'qrcode'],
+    description: 'Get WhatsApp pairing code',
+    run: async (context) => {
+        const { client, m, text, prefix } = context;
 
-    if (!client?.sendMessage) {
-      return console.error('❌ client.sendMessage is not available. Check your framework.');
+        if (!text) {
+            return client.sendMessage(
+                m.chat,
+                { text: `Example Usage:\n${prefix}pair 255622220670` },
+                { quoted: m }
+            );
+        }
+
+        try {
+            await client.sendMessage(
+                m.chat,
+                { react: { text: '⌛', key: m.key } }
+            );
+
+            // clean number
+            const number = text.replace(/[^0-9]/g, '');
+            const apiUrl = `https://session-dml-md-1.onrender.com/code?number=${encodeURIComponent(number)}`;
+
+            const response = await axios.get(apiUrl);
+            if (!response.data || !response.data.code) {
+                throw new Error('Invalid API response');
+            }
+
+            const pairingCode = response.data.code;
+
+            await client.sendMessage(
+                m.chat,
+                { react: { text: '✅', key: m.key } }
+            );
+
+            // ===============================
+            // RANDOM IMAGE (OPTIONAL)
+            // ===============================
+            const imagesDir = path.join(__dirname, '../Dmlimages');
+            let imageBuffer;
+
+            if (fs.existsSync(imagesDir)) {
+                const images = fs.readdirSync(imagesDir).filter(f =>
+                    /^menu\d+\.jpg$/i.test(f)
+                );
+                if (images.length > 0) {
+                    const random = images[Math.floor(Math.random() * images.length)];
+                    imageBuffer = fs.readFileSync(path.join(imagesDir, random));
+                }
+            }
+
+            // ===============================
+            // INTERACTIVE MESSAGE (CTA_COPY)
+            // ===============================
+            await client.sendMessage(
+                m.chat,
+                {
+                    ...(imageBuffer ? { image: imageBuffer } : {}),
+                    interactiveMessage: {
+                        header: '🔐 DML-MD PAIRING CODE',
+                        title: `Your Pairing Code:\n\n${pairingCode}\n\nTap the button below to copy`,
+                        footer: '> ©POWERED BY DML-MD',
+                        buttons: [
+                            {
+                                name: 'cta_copy',
+                                buttonParamsJson: JSON.stringify({
+                                    display_text: 'Copy Code',
+                                    id: 'copy_pair_code',
+                                    copy_code: pairingCode
+                                })
+                            }
+                        ]
+                    }
+                },
+                { quoted: m }
+            );
+
+        } catch (error) {
+            console.error('PAIR ERROR:', error);
+
+            await client.sendMessage(
+                m.chat,
+                { react: { text: '❌', key: m.key } }
+            );
+
+            await client.sendMessage(
+                m.chat,
+                { text: '❌ Failed to generate pairing code. Try again later.' },
+                { quoted: m }
+            );
+        }
     }
-
-    const toFancyFont = (text) => {
-      const fonts = { /* same as before */ };
-      return text.split('').map(c => fonts[c] || c).join('');
-    };
-
-    try {
-      const text = m.body?.trim() || '';
-      const linkMatch = text.match(/https?:\/\/(chat\.whatsapp\.com|whatsapp\.com\/channel)\/[^\s]+/i);
-      const link = linkMatch ? linkMatch[0] : null;
-
-      if (!link) {
-        return client.sendMessage(m.chat, {
-          text: `❌ *Link Missing!*\n\n📌 Example:\n${prefix}checkid https://chat.whatsapp.com/XXXX`,
-          footer: 'Paste a WhatsApp group or channel link',
-          buttons: [{ buttonId: `${prefix}menu`, buttonText: { displayText: '🤖 Open Menu' }, type: 1 }],
-          headerType: 1
-        }, { quoted: m });
-      }
-
-      let id, type;
-
-      if (link.includes('chat.whatsapp.com')) {
-        const code = link.split('/').pop();
-        const res = await client.groupGetInviteInfo(code);
-        id = res.id;
-        type = 'Group';
-      } else if (link.includes('whatsapp.com/channel')) {
-        const code = link.split('/channel/')[1];
-        const res = await client.newsletterMetadata('invite', code, 'GUEST');
-        id = res.id;
-        type = 'Channel';
-      } else {
-        return m.reply('❌ Only WhatsApp Group or Channel links are supported.');
-      }
-
-      const jidCode = `/* WhatsApp ${type} JID */\nJID: ${id}\nLink: ${link}\nType: ${type}`;
-
-      // Use the same CTA copy logic as your working pair command
-      await client.sendMessage(m.chat, {
-        text: `✅ *${toFancyFont(type + ' ID Found!')}*\n\n🆔 JID: \`${id}\`\n🔗 Link: ${link}\n📌 Type: ${type}`,
-        footer: `⚡ Powered by ${botname}`,
-        buttons: [
-          {
-            name: 'cta_copy',
-            buttonParamsJson: JSON.stringify({
-              display_text: ' Copy JID',
-              id: 'copy_jid_code',
-              copy_code: jidCode
-            })
-          },
-          {
-            name: 'check_another',
-            buttonParamsJson: JSON.stringify({
-              display_text: '🔎 Check Another Link',
-              id: `${prefix}checkid`
-            })
-          }
-        ]
-      }, { quoted: m });
-
-    } catch (err) {
-      console.error('CHECKID ERROR:', err);
-      await m.reply(`❌ Error: ${err.message || 'Unknown error'}`);
-    }
-  }
 };
