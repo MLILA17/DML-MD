@@ -73,13 +73,14 @@ module.exports = {
         }, { quoted: m });
       }
 
-      // ✅ Success message with CTA COPY (FIXED)
+      // ✅ SUCCESS MESSAGE (INVALID MEDIA TYPE FIXED)
       await client.sendMessage(m.chat, {
         viewOnceMessage: {
           message: {
             interactiveMessage: {
               header: {
-                title: `✅ ${toFancyFont(type + ' ID Found!')}`
+                title: `✅ ${toFancyFont(type + ' ID Found!')}`,
+                hasMediaAttachment: false
               },
               body: {
                 text:
