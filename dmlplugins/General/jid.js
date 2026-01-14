@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = {
-  name: 'checkid',
+  name: 'jid',
   aliases: ['cekid', 'getid', 'id'],
   description: 'Get the JID of a WhatsApp group or channel from its invite link',
   run: async (context) => {
