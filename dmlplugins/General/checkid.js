@@ -77,36 +77,30 @@ module.exports = {
       }
 
       // ===============================
-      // OPTIONAL RANDOM IMAGE HEADER
-      // ===============================
-      const imagesDir = path.join(__dirname, '../Dmlimages');
-      let imageBuffer;
-      if (fs.existsSync(imagesDir)) {
-        const images = fs.readdirSync(imagesDir).filter(f =>
-          /^menu\d+\.jpg$/i.test(f)
-        );
-        if (images.length > 0) {
-          const random = images[Math.floor(Math.random() * images.length)];
-          imageBuffer = fs.readFileSync(path.join(imagesDir, random));
-        }
-      }
-
-      // ===============================
-      // INTERACTIVE MESSAGE WITH CTA_COPY
+      // INTERACTIVE MESSAGE WITH CTA_COPY + REPO BUTTON
       // ===============================
       await client.sendMessage(m.chat, {
-        ...(imageBuffer ? { image: imageBuffer } : {}),
         interactiveMessage: {
-          header: `🔗 ${type} JID Found!`,
+          header: `🔗 ${type} ID Found!`,
           title: `Link: ${link}\n\nJID: \`${id}\`\n\nType: ${type}`,
           footer: `⚡ Powered by ${botname}`,
           buttons: [
+            // Copy JID button
             {
               name: 'cta_copy',
               buttonParamsJson: JSON.stringify({
                 display_text: 'Copy JID',
                 id: 'copy_jid_code',
                 copy_code: id
+              })
+            },
+            // Repo button (opens URL)
+            {
+              name: 'url_button',
+              buttonParamsJson: JSON.stringify({
+                display_text: 'Repo',
+                id: 'open_repo',
+                url: 'https://github.com/MLILA17/DML-MD
               })
             }
           ]
