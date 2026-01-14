@@ -28,18 +28,17 @@ module.exports = {
       // No link provided
       if (!link) {
         return client.sendMessage(m.chat, {
-          text:
-            `❌ *Link Missing!*\n\n` +
-            `📌 Example:\n${prefix}checkid https://chat.whatsapp.com/XXXX`,
+          text: `❌ *Link Missing!*\n\n📌 Example:\n${prefix}checkid https://chat.whatsapp.com/XXXX`,
           footer: 'Paste a WhatsApp group or channel link',
           buttons: [
             {
-              buttonId: `${prefix}menu`,
-              buttonText: { displayText: '🤖 Open Menu' },
-              type: 1
+              name: 'cta_quick_reply',
+              buttonParamsJson: JSON.stringify({
+                display_text: '🤖 Open Menu',
+                id: `${prefix}menu`
+              })
             }
-          ],
-          headerType: 1
+          ]
         }, { quoted: m });
       }
 
@@ -68,7 +67,7 @@ module.exports = {
         type = 'Channel';
       }
 
-      // Unsupported
+      // Unsupported link
       else {
         return m.reply('❌ Only WhatsApp Group or Channel links are supported.');
       }
@@ -83,22 +82,28 @@ module.exports = {
         footer: `⚡ Powered by ${botname}`,
         buttons: [
           {
-            buttonId: 'copy_jid',
-            buttonText: { displayText: 'Copy JID' },
-            type: 1
+            name: 'cta_copy',
+            buttonParamsJson: JSON.stringify({
+              display_text: ' Copy JID',
+              id: 'copy_jid_code',
+              copy_code: id
+            })
           },
           {
-            buttonId: `${prefix}checkid`,
-            buttonText: { displayText: '🔎 Check Another Link' },
-            type: 1
+            name: 'cta_quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '🔎 Check Another Link',
+              id: `${prefix}checkid`
+            })
           },
           {
-            buttonId: `${prefix}menu`,
-            buttonText: { displayText: '🤖 More Commands' },
-            type: 1
+            name: 'cta_quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '🤖 More Commands',
+              id: `${prefix}menu`
+            })
           }
-        ],
-        headerType: 1
+        ]
       }, { quoted: m });
 
     } catch (err) {
