@@ -73,23 +73,38 @@ module.exports = {
         }, { quoted: m });
       }
 
-      // ✅ Success message WITH CTA COPY
+      // ✅ Success message with CTA COPY (FIXED)
       await client.sendMessage(m.chat, {
-        text: `✅ *${toFancyFont(type + ' ID Found!')}*\n\n` +
-              `🔗 *Link:* ${link}\n` +
-              `🆔 *JID:* \`${id}\`\n` +
-              `📌 *Type:* ${type}\n\n` +
-              `⚡ Powered by *${botname}*`,
-        footer: botname,
-        buttons: [
-          {
-            name: "cta_copy",
-            buttonParamsJson: JSON.stringify({
-              display_text: "Copy JID",
-              copy_code: id
-            })
+        viewOnceMessage: {
+          message: {
+            interactiveMessage: {
+              header: {
+                title: `✅ ${toFancyFont(type + ' ID Found!')}`
+              },
+              body: {
+                text:
+                  `🔗 *Link:* ${link}\n` +
+                  `🆔 *JID:* ${id}\n` +
+                  `📌 *Type:* ${type}\n\n` +
+                  `⚡ Powered by *${botname}*`
+              },
+              footer: {
+                text: botname
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: "cta_copy",
+                    buttonParamsJson: JSON.stringify({
+                      display_text: "Copy JID",
+                      copy_code: id
+                    })
+                  }
+                ]
+              }
+            }
           }
-        ]
+        }
       }, { quoted: m });
 
     } catch (error) {
