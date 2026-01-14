@@ -73,13 +73,23 @@ module.exports = {
         }, { quoted: m });
       }
 
-      // Success message
+      // ✅ Success message WITH CTA COPY
       await client.sendMessage(m.chat, {
         text: `✅ *${toFancyFont(type + ' ID Found!')}*\n\n` +
               `🔗 *Link:* ${link}\n` +
               `🆔 *JID:* \`${id}\`\n` +
               `📌 *Type:* ${type}\n\n` +
-              `⚡ Copy the JID above. Powered by *${botname}*`
+              `⚡ Powered by *${botname}*`,
+        footer: botname,
+        buttons: [
+          {
+            name: "cta_copy",
+            buttonParamsJson: JSON.stringify({
+              display_text: "Copy JID",
+              copy_code: id
+            })
+          }
+        ]
       }, { quoted: m });
 
     } catch (error) {
@@ -92,4 +102,4 @@ module.exports = {
     }
   }
 };
-//dml
+// dml
