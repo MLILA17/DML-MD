@@ -1,7 +1,3 @@
-/**
- * Gets the JID of a WhatsApp group or channel from an invite link
- * @module checkid
- */
 module.exports = {
   name: 'checkid',
   aliases: ['cekid', 'getid', 'id'],
@@ -9,7 +5,6 @@ module.exports = {
   run: async (context) => {
     const { client, m, prefix, botname } = context;
 
-    // Fancy font utility
     const toFancyFont = (text) => {
       const fonts = {
         A:'𝘼',B:'𝘽',C:'𝘾',D:'𝘿',E:'𝙀',F:'𝙁',G:'𝙂',H:'𝙃',I:'𝙄',J:'𝙅',K:'𝙆',L:'𝙇',M:'𝙈',
@@ -25,86 +20,62 @@ module.exports = {
       const linkMatch = text.match(/https?:\/\/(chat\.whatsapp\.com|whatsapp\.com\/channel)\/[^\s]+/i);
       const link = linkMatch ? linkMatch[0] : null;
 
-      // No link provided
       if (!link) {
         return client.sendMessage(m.chat, {
           text: `❌ *Link Missing!*\n\n📌 Example:\n${prefix}checkid https://chat.whatsapp.com/XXXX`,
           footer: 'Paste a WhatsApp group or channel link',
-          buttons: [
-            {
-              name: 'cta_quick_reply',
-              buttonParamsJson: JSON.stringify({
-                display_text: '🤖 Open Menu',
-                id: `${prefix}menu`
-              })
-            }
-          ]
+          buttons: [{ buttonId: `${prefix}menu`, buttonText: { displayText: '🤖 Open Menu' }, type: 1 }],
+          headerType: 1
         }, { quoted: m });
       }
 
       let url;
-      try {
-        url = new URL(link);
-      } catch {
-        return m.reply('❌ Invalid WhatsApp link format.');
-      }
+      try { url = new URL(link); } catch { return m.reply('❌ Invalid WhatsApp link format.'); }
 
       let id, type;
 
-      // GROUP LINK
       if (url.hostname === 'chat.whatsapp.com') {
         const code = url.pathname.replace('/', '');
         const res = await client.groupGetInviteInfo(code);
         id = res.id;
         type = 'Group';
-      }
-
-      // CHANNEL LINK
-      else if (url.hostname === 'whatsapp.com' && url.pathname.startsWith('/channel/')) {
+      } else if (url.hostname === 'whatsapp.com' && url.pathname.startsWith('/channel/')) {
         const code = url.pathname.split('/channel/')[1];
         const res = await client.newsletterMetadata('invite', code, 'GUEST');
         id = res.id;
         type = 'Channel';
-      }
-
-      // Unsupported link
-      else {
+      } else {
         return m.reply('❌ Only WhatsApp Group or Channel links are supported.');
       }
 
-      // SUCCESS MESSAGE WITH CTA BUTTONS
+      // The full code as a string to send when Copy Code button is pressed
+      const fullCode = `/**
+ * Gets the JID of a WhatsApp group or channel from an invite link
+ * @module checkid
+ */
+${module.exports.toString()}`;
+
       await client.sendMessage(m.chat, {
-        text:
-          `✅ *${toFancyFont(type + ' ID Found!')}*\n\n` +
-          `🔗 *Link:*\n${link}\n\n` +
-          `🆔 *JID:*\n\`${id}\`\n\n` +
-          `📌 *Type:* ${type}`,
+        text: `✅ *${toFancyFont(type + ' ID Found!')}*\n\n🔗 *Link:*\n${link}\n\n🆔 *JID:*\n\`${id}\`\n\n📌 *Type:* ${type}`,
         footer: `⚡ Powered by ${botname}`,
         buttons: [
-          {
-            name: 'cta_copy',
-            buttonParamsJson: JSON.stringify({
-              display_text: ' Copy JID',
-              id: 'copy_jid_code',
-              copy_code: id
-            })
-          },
-          {
-            name: 'cta_quick_reply',
-            buttonParamsJson: JSON.stringify({
-              display_text: '🔎 Check Another Link',
-              id: `${prefix}checkid`
-            })
-          },
-          {
-            name: 'cta_quick_reply',
-            buttonParamsJson: JSON.stringify({
-              display_text: '🤖 More Commands',
-              id: `${prefix}menu`
-            })
-          }
-        ]
+          { buttonId: 'copy_code', buttonText: { displayText: ' Copy Code' }, type: 1 },
+          { buttonId: `${prefix}checkid`, buttonText: { displayText: '🔎 Check Another Link' }, type: 1 },
+          { buttonId: `${prefix}menu`, buttonText: { displayText: '🤖 More Commands' }, type: 1 }
+        ],
+        headerType: 1
       }, { quoted: m });
+
+      // Handle button clicks
+      client.on('message.upsert', async (msgUpdate) => {
+        const message = msgUpdate.messages?.[0];
+        if (!message || !message.key.remoteJid) return;
+
+        const buttonId = message?.message?.buttonsResponseMessage?.selectedButtonId;
+        if (buttonId === 'copy_code' && message.key.fromMe) {
+          await client.sendMessage(message.key.remoteJid, { text: fullCode }, { quoted: message });
+        }
+      });
 
     } catch (err) {
       console.error('CHECKID ERROR:', err);
