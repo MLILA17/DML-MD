@@ -34,7 +34,7 @@ module.exports = {
       if (!link) {
         return client.sendMessage(m.chat, {
           text: `❌ *Oops!* @${m.sender.split('@')[0]}, you forgot to provide a link!\n` +
-                `💡 Example: ${prefix}checkid https://chat.whatsapp.com/ABC123`,
+                `💡 Example: ${prefix}jid https://chat.whatsapp.com/ABC123`,
           mentions: [m.sender]
         }, { quoted: m });
       }
@@ -108,7 +108,7 @@ module.exports = {
       }, { quoted: m });
 
     } catch (error) {
-      console.error('CheckID command error:', error);
+      console.error('Checkjid command error:', error);
       await client.sendMessage(m.chat, {
         text: `❌ *Error!* @${m.sender.split('@')[0]}\n` +
               `⚠️ ${error.message || 'Unknown error occurred'}`,
