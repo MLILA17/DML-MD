@@ -100,7 +100,7 @@ module.exports = {
               buttonParamsJson: JSON.stringify({
                 display_text: 'Repo',
                 id: 'open_repo',
-                url: 'https://github.com/MLILA17/DML-MD
+                url: 'https://github.com/MLILA17/DML-MD'
               })
             }
           ]
