@@ -28,9 +28,7 @@ module.exports = async (context) => {
         `Nothing found for "${text}". Your taste is as nonexistent as the results.`
       );
 
-    const apiUrl = `https://api.ootaizumi.web.id/downloader/spotifyplay?query=${encodeURIComponent(
-      video.url
-    )}`;
+    const apiUrl = `https://api.ootaizumi.web.id/downloader/spotifyplay?query=${encodeURIComponent(text)}`;
 
     const response = await axios.get(apiUrl);
     const apiData = response.data;
