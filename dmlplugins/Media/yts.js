@@ -3,9 +3,22 @@ const yts = require("yt-search");
 module.exports = async (context) => {
   const { client, m, text } = context;
 
+  // ==========dml =================
   const formatStylishReply = (message) => {
-    return `╭┈┈┈┈━━━━━━┈┈┈┈◈◈\n│❒ ${message}\n╰┈┈┈┈━━━━━━┈┈┈┈◈\n> ©POWERED BY YOU`;
+    return `╔═════════════✦✦\n║ ❒ ${message}\n╚════════════✦✦\n➤ ©POWERED BY YOU`;
   };
+
+  const formatVideoBox = (v, index) => {
+    return `╔═══════════════✦✦
+║ ${index + 1}. 🎬 Title: ${v.title}
+║ 👤 Author: ${v.author?.name || "Unknown"} (${v.author?.url || "No URL"})
+║ 👁 Views: ${v.views.toLocaleString()}
+║ ⏳ Duration: ${v.timestamp}
+║ 📅 Uploaded: ${v.ago}
+║ 🔗 Link: ${v.url}
+╚═══════════════✦✦\n`;
+  };
+  // ================================================================
 
   if (!text) {
     return client.sendMessage(
@@ -32,18 +45,10 @@ module.exports = async (context) => {
     let replyText = `🔎 *Dml YouTube Search Results for:* ${text}\n\n`;
 
     for (let i = 0; i < videos.length; i++) {
-      const v = videos[i];
-      replyText += `╭┈┈┈┈━━━━━━┈┈┈┈◈\n`;
-      replyText += `🎬 *Title:* ${v.title}\n`;
-      replyText += `📎 *Link:* ${v.url}\n`;
-      replyText += `👤 *Author:* ${v.author.name} (${v.author.url})\n`;
-      replyText += `👁 *Views:* ${v.views.toLocaleString()}\n`;
-      replyText += `⏳ *Duration:* ${v.timestamp}\n`;
-      replyText += `📅 *Uploaded:* ${v.ago}\n`;
-      replyText += `\n`;
+      replyText += formatVideoBox(videos[i], i);
     }
 
-    replyText += `╰┈┈┈┈━━━━━━┈┈┈┈◈\n> ©POWERED BY YOU`;
+    replyText += `➤ End of Results`;
 
     await client.sendMessage(
       m.chat,
@@ -51,12 +56,12 @@ module.exports = async (context) => {
       { quoted: m, ad: true }
     );
 
-    // Optionally send thumbnail of the first result
+    // Send thumbnail of the first result with premium style caption
     await client.sendMessage(
       m.chat,
       {
         image: { url: videos[0].thumbnail },
-        caption: formatStylishReply(`🎬 First result: *${videos[0].title}*\n📎 ${videos[0].url}`),
+        caption: formatStylishReply(`🎬 First result: ${videos[0].title}\n🔗 ${videos[0].url}`),
       },
       { quoted: m }
     );
