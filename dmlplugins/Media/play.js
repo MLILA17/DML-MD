@@ -15,7 +15,7 @@ module.exports = async (context) => {
         const video = searchResult.videos[0];
         if (!video) return m.reply(`Nothing found for "${text}". Your taste is as nonexistent as the results.`);
 
-        const apiUrl = `https://api.privatezia.biz.id/api/downloader/ytplaymp3?query=${encodeURIComponent(video.url)}`;
+        const apiUrl = `https://api.ootaizumi.web.id/downloader/spotifyplay?query=${encodeURIComponent(video.url)}`;
         const response = await axios.get(apiUrl);
         const apiData = response.data;
         if (!apiData.status || !apiData.result || !apiData.result.downloadUrl) throw new Error("The API spat out garbage. No audio for you.");
