@@ -1,41 +1,186 @@
+// Active GitHub sessions (NO EXPIRY)
+const githubSessions = new Map();
+
 module.exports = async (context) => {
+  const { client, m, text } = context;
+  const chatId = m.chat;
 
-const { client, m, text } = context;
+  // ================= BUTTON HANDLER =================
+  if (m.message?.buttonsResponseMessage) {
+    try {
+      const buttonId = m.message.buttonsResponseMessage.selectedButtonId;
+      const session = githubSessions.get(chatId);
 
-if (!text) return m.reply('Provide a github username to stalk');
+      if (!session) {
+        return m.reply("❌ No active GitHub session. Use the command again.");
+      }
 
-try {
+      const { username, userData } = session;
 
-const response = await fetch(`https://itzpire.com/stalk/github-user?username=${text}`)
+      // 📸 PROFILE PIC
+      if (buttonId === "profile_pic") {
+        if (!userData.avatar_url) {
+          return m.reply("❌ No profile picture available.");
+        }
 
-const data = await response.json()
- 
-    const username = data.data.username;
-    const nickname = data.data.nickname;
-    const bio = data.data.bio;
-    const profilePic = data.data.profile_pic;
-    const url = data.data.url;
-    const type = data.data.type;
-    const isAdmin = data.data.admin;
-    const company = data.data.company;
-    const blog = data.data.blog;
-    const location = data.data.location;
-    const publicRepos = data.data.public_repo;
-    const publicGists = data.data.public_gists;
-    const followers = data.data.followers;
-    const following = data.data.following;
-    const createdAt = data.data.ceated_at;
-    const updatedAt = data.data.updated_at;
+        return client.sendMessage(
+          chatId,
+          {
+            image: { url: userData.avatar_url },
+            caption: `📸 Profile picture of ${username}`
+          },
+          { quoted: m }
+        );
+      }
 
-    
-const message = `Username:- ${username}\n\nNickname:- ${nickname}\n\nBio:- ${bio}\n\nLink:- ${url}\n\nLocation:- ${location}\n\nFollowers:- ${followers}\n\nFollowing:- ${following}\n\nRepos:- ${publicRepos}\n\nCreated:- ${createdAt}`
+      // 📂 REPOSITORIES
+      if (buttonId === "repos_info") {
+        await m.reply("📂 Fetching repositories... ⏳");
 
-await client.sendMessage(m.chat, { image: { url: profilePic}, caption: message}, {quoted: m})
+        const res = await fetch(
+          `https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=10`
+        );
+        const repos = await res.json();
 
-} catch (error) {
+        if (!repos.length) return m.reply("No public repositories found.");
 
-m.reply("Unable to fetch data\n" + error)
+        let msg = `📂 *Latest Repositories for ${username}*\n\n`;
 
-}
+        repos.slice(0, 5).forEach((repo, i) => {
+          msg += `${i + 1}. *${repo.name}*\n`;
+          msg += `📝 ${repo.description || "No description"}\n`;
+          msg += `⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}\n`;
+          msg += `🔗 ${repo.html_url}\n\n`;
+        });
 
-} 
+        return client.sendMessage(chatId, { text: msg }, { quoted: m });
+      }
+
+      // 👥 FOLLOWERS
+      if (buttonId === "followers_info") {
+        await m.reply("👥 Fetching followers... ⏳");
+
+        const res = await fetch(
+          `https://api.github.com/users/${encodeURIComponent(username)}/followers?per_page=10`
+        );
+        const followers = await res.json();
+
+        if (!followers.length) return m.reply("No followers found.");
+
+        let msg = `👥 *Followers of ${username}*\n\n`;
+        followers.slice(0, 5).forEach((f, i) => {
+          msg += `${i + 1}. ${f.login}\n`;
+        });
+
+        msg += `\nTotal Followers: ${userData.followers}`;
+
+        return client.sendMessage(chatId, { text: msg }, { quoted: m });
+      }
+
+      // 🔍 MORE INFO
+      if (buttonId === "more_info") {
+        await m.reply("🔍 Fetching more info... ⏳");
+
+        const orgRes = await fetch(
+          `https://api.github.com/users/${encodeURIComponent(username)}/orgs`
+        );
+        const orgs = await orgRes.json();
+
+        let msg = `🔍 *Detailed Info for ${username}*\n\n`;
+        msg += `📂 Repos: ${userData.public_repos}\n`;
+        msg += `👥 Followers: ${userData.followers}\n`;
+        msg += `➡ Following: ${userData.following}\n`;
+        msg += `📅 Created: ${new Date(userData.created_at).toDateString()}\n\n`;
+
+        msg += `🏢 *Organizations:*\n`;
+        if (orgs.length) {
+          orgs.forEach((o, i) => (msg += `${i + 1}. ${o.login}\n`));
+        } else {
+          msg += "None\n";
+        }
+
+        return client.sendMessage(chatId, { text: msg }, { quoted: m });
+      }
+
+      // 🔄 NEW SEARCH
+      if (buttonId === "new_search") {
+        githubSessions.delete(chatId);
+        return m.reply("🔄 Session cleared. Send a new GitHub username.");
+      }
+
+    } catch (err) {
+      console.error(err);
+      return m.reply("❌ Button error: " + err.message);
+    }
+  }
+
+  // ================= MAIN COMMAND =================
+  if (!text) {
+    return m.reply("Provide a GitHub username to stalk");
+  }
+
+  try {
+    await m.reply(`🔍 Fetching GitHub data for *${text}*...`);
+
+    const res = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(text)}`
+    );
+    const data = await res.json();
+
+    if (data.message === "Not Found") {
+      return m.reply("❌ GitHub user not found.");
+    }
+
+    githubSessions.set(chatId, {
+      username: data.login,
+      userData: data,
+      createdAt: Date.now()
+    });
+
+    const info = `
+👨‍💻 *GitHub User*
+👤 Username: ${data.login}
+📛 Name: ${data.name || "N/A"}
+📝 Bio: ${data.bio || "None"}
+🏢 Company: ${data.company || "N/A"}
+🌍 Location: ${data.location || "N/A"}
+🔗 Profile: ${data.html_url}
+
+📊 Stats
+📂 Repos: ${data.public_repos}
+👥 Followers: ${data.followers}
+➡ Following: ${data.following}
+📅 Created: ${new Date(data.created_at).toDateString()}
+`.trim();
+
+    await client.sendMessage(chatId, { text: info }, { quoted: m });
+
+    if (data.avatar_url) {
+      await client.sendMessage(chatId, {
+        image: { url: data.avatar_url },
+        caption: `📸 ${data.login}`
+      });
+    }
+
+    const buttons = [
+      { buttonId: "profile_pic", buttonText: { displayText: "📸 Profile Pic" }, type: 1 },
+      { buttonId: "repos_info", buttonText: { displayText: "📂 Repositories" }, type: 1 },
+      { buttonId: "followers_info", buttonText: { displayText: "👥 Followers" }, type: 1 },
+      { buttonId: "more_info", buttonText: { displayText: "🔍 More Info" }, type: 1 },
+      { buttonId: "new_search", buttonText: { displayText: "🔄 New Search" }, type: 1 }
+    ];
+
+    await client.sendMessage(chatId, {
+      text: `💻 *GitHub Menu for ${data.login}*`,
+      buttons,
+      headerType: 1
+    });
+
+  } catch (error) {
+    console.error(error);
+    m.reply("❌ Failed to fetch GitHub data\n" + error.message);
+  }
+};
+
+// Export sessions if needed elsewhere
+module.exports.githubSessions = githubSessions;
