@@ -22,7 +22,7 @@ module.exports = async (context) => {
       return m.reply("❌ GitHub user not found.");
     }
 
-    // Save session (optional, still useful)
+    // Save session (optional)
     githubSessions.set(chatId, {
       username: data.login,
       userData: data,
@@ -46,20 +46,8 @@ module.exports = async (context) => {
 📅 Created: ${new Date(data.created_at).toDateString()}
 `.trim();
 
-    // Send profile info
+    // Send ONLY text info
     await client.sendMessage(chatId, { text: info }, { quoted: m });
-
-    // Send profile picture
-    if (data.avatar_url) {
-      await client.sendMessage(
-        chatId,
-        {
-          image: { url: data.avatar_url },
-          caption: `📸 GitHub profile picture of ${data.login}`
-        },
-        { quoted: m }
-      );
-    }
 
     // Fetch repositories
     const repoRes = await fetch(
