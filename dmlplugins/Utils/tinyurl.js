@@ -55,13 +55,13 @@ module.exports = {
                         {
                             name: "cta_copy",
                             buttonParamsJson: JSON.stringify({
-                                display_text: "📋 Copy Short URL",
+                                display_text: " Copy Short URL",
                                 id: "copy_shorturl",
                                 copy_code: shortUrl
                             })
                         },
                         {
-                            name: "cta_copy",
+                            name: "cta_url",
                             buttonParamsJson: JSON.stringify({
                                 display_text: "🌐 Open in Browser",
                                 id: "open_url",
