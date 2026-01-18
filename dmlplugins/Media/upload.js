@@ -40,23 +40,41 @@ module.exports = async (context) => {
 
         await client.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
 
-        await client.sendMessage(m.chat, {
-            interactiveMessage: {
-                header: "Media Uploaded Successfully ✅",
-                title: `Media Link: \n\n${link}\n\nSize: ${fileSizeMB} MB`,
-                footer: "> ©POWERED BY YOU",
-                buttons: [
-                    {
-                        name: "cta_copy",
-                        buttonParamsJson: JSON.stringify({
-                            display_text: "Copy Link",
-                            id: `copy_${Date.now()}`,
-                            copy_code: link,
-                        }),
-                    },
-                ],
+        await client.sendMessage(
+            m.chat,
+            {
+                interactiveMessage: {
+                    header: "Media Uploaded Successfully ✅",
+                    title: `Media Link:\n\n${link}\n\nSize: ${fileSizeMB} MB`,
+                    footer: "> © DML-MD",
+                    buttons: [
+                        {
+                            name: "cta_copy",
+                            buttonParamsJson: JSON.stringify({
+                                display_text: "Copy Link",
+                                id: `copy_${Date.now()}`,
+                                copy_code: link,
+                            }),
+                        },
+                        {
+                            name: "cta_url",
+                            buttonParamsJson: JSON.stringify({
+                                display_text: "⭐ GitHub Repo",
+                                url: "https://github.com/MLILA17/DML-MD",
+                            }),
+                        },
+                        {
+                            name: "cta_url",
+                            buttonParamsJson: JSON.stringify({
+                                display_text: "📢 View Channel",
+                                url: "https://whatsapp.com/channel/0029VbBf4Y52kNFkFCx2pF1H",
+                            }),
+                        },
+                    ],
+                },
             },
-        }, { quoted: m });
+            { quoted: m }
+        );
 
     } catch (err) {
         console.error('Upload error:', err);
@@ -64,4 +82,4 @@ module.exports = async (context) => {
         m.reply(`Error during upload: ${err.message}`);
     }
 };
-//DML
+// DML
