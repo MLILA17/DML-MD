@@ -56,7 +56,7 @@ module.exports = {
             }
 
             // ===============================
-            // INTERACTIVE MESSAGE (CTA_COPY)
+            // INTERACTIVE MESSAGE (CTA_COPY + CTA_URL)
             // ===============================
             await client.sendMessage(
                 m.chat,
@@ -70,9 +70,23 @@ module.exports = {
                             {
                                 name: 'cta_copy',
                                 buttonParamsJson: JSON.stringify({
-                                    display_text: 'Copy Code',
+                                    display_text: ' Copy Code',
                                     id: 'copy_pair_code',
                                     copy_code: pairingCode
+                                })
+                            },
+                            {
+                                name: 'cta_url',
+                                buttonParamsJson: JSON.stringify({
+                                    display_text: '⭐ GitHub Repo',
+                                    url: 'https://github.com/MLILA17/DML-MD'
+                                })
+                            },
+                            {
+                                name: 'cta_url',
+                                buttonParamsJson: JSON.stringify({
+                                    display_text: '📢 View Channel',
+                                    url: 'https://whatsapp.com/channel/0029VbBf4Y52kNFkFCx2pF1H'
                                 })
                             }
                         ]
