@@ -54,7 +54,6 @@
     "file-type": "16.5.3",
     "fluent-ffmpeg": "^2.1.3",
     "fs": "^0.0.1-security",
-    "function-main": "git+https://github.com/MLILA17/Dml-Function-Main.git",
     "g4f": "^1.1.0",
     "gemini-ai": "^1.1.0",
     "genius-lyrics": "^4.4.3",
