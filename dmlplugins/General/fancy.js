@@ -1,48 +1,41 @@
-const fetch = require('node-fetch');
+const fancyMap = [
+    { name: 'Bold', map: '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭abcdefghijklmnopqrstuvwxyz' },
+    { name: 'Italic', map: '𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍abcdefghijklmnopqrstuvwxyz' },
+    { name: 'Bold Italic', map: '𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁abcdefghijklmnopqrstuvwxyz' },
+    { name: 'Script', map: '𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩abcdefghijklmnopqrstuvwxyz' },
+    { name: 'Bubble', map: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ' },
+    { name: 'Small Caps', map: 'ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢabcdefghijklmnopqrstuvwxyz' }
+];
 
-const GOOGLE_FONTS_API_KEY = 'AIzaSyDIjr73rt-xbCKiuW2vxYLoDDSr9BYeNVM';
+function toFancy(text, map) {
+    const normal = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let result = '';
+    for (let char of text) {
+        const idx = normal.indexOf(char);
+        result += idx >= 0 ? map[idx] : char;
+    }
+    return result;
+}
 
 module.exports = {
     name: 'fancy',
     aliases: ['fancytext', 'style', 'stylish'],
-    description: 'Shows all available fancy font styles from Google Fonts',
+    description: 'Shows multiple fancy text styles',
     run: async (context) => {
-        const { client, m, prefix } = context;
+        const { client, m, args, prefix } = context;
+        const input = args.join(' ');
 
-        // React to show it's loading
+        if (!input) return m.reply(`Usage: ${prefix}fancy <text>`);
+
         await client.sendMessage(m.chat, { react: { text: '✨', key: m.key } });
 
-        try {
-            // Fetch Google Fonts list
-            const response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}`);
-            const data = await response.json();
+        let msg = `*FANCY TEXT STYLES* 🔥\n\n`;
+        fancyMap.forEach((f, i) => {
+            msg += `*${i + 1}. ${f.name}:* ${toFancy(input, f.map)}\n`;
+        });
 
-            if (!data.items || data.items.length === 0) {
-                return m.reply("Couldn't fetch fonts. Google API is sad 😢");
-            }
+        msg += `\n> Powered by Dml`;
 
-            // Limit to first 50 fonts for readability
-            const fonts = data.items.slice(0, 50);
-
-            let msg = `*FANCY FONT MENU* 🔥\n\n`;
-            msg += `Found *${fonts.length}* styles. Pick one by replying with:\n`;
-            msg += `*${prefix}fancy<number> your text*\n\n`;
-            msg += `Example: ${prefix}fancy1 DML-XMD\n`;
-            msg += `Example: ${prefix}fancy42 Hello\n\n`;
-            msg += `──────────────────\n\n`;
-
-            fonts.forEach((font, i) => {
-                msg += `*${i + 1}.* ${font.family}\n`;
-            });
-
-            msg += `\n> Powered by 𝙳𝙼𝙻-𝚇𝙼𝙳 💀`;
-
-            await client.sendMessage(m.chat, { text: msg }, { quoted: m });
-
-        } catch (error) {
-            await client.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-            console.error(error);
-            m.reply("Failed to load fonts. Google API is probably crying. Try later.");
-        }
+        await client.sendMessage(m.chat, { text: msg }, { quoted: m });
     }
 };
