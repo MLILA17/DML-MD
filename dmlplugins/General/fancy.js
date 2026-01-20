@@ -1,31 +1,38 @@
 const fetch = require('node-fetch');
 
+const GOOGLE_FONTS_API_KEY = 'AIzaSyDIjr73rt-xbCKiuW2vxYLoDDSr9BYeNVM';
+
 module.exports = {
     name: 'fancy',
     aliases: ['fancytext', 'style', 'stylish'],
-    description: 'Shows all available fancy font styles',
+    description: 'Shows all available fancy font styles from Google Fonts',
     run: async (context) => {
         const { client, m, prefix } = context;
 
+        // React to show it's loading
         await client.sendMessage(m.chat, { react: { text: '✨', key: m.key } });
 
         try {
-            const response = await fetch('https://movanest.zone.id/v2/fancytext?word=Toxic');
+            // Fetch Google Fonts list
+            const response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}`);
             const data = await response.json();
 
-            if (!data.status || !data.results || data.results.length === 0) {
-                return m.reply("API's dead or being a bitch. Try again later.");
+            if (!data.items || data.items.length === 0) {
+                return m.reply("Couldn't fetch fonts. Google API is sad 😢");
             }
 
+            // Limit to first 50 fonts for readability
+            const fonts = data.items.slice(0, 50);
+
             let msg = `*FANCY FONT MENU* 🔥\n\n`;
-            msg += `Found *${data.count}* styles. Pick one by replying with:\n`;
+            msg += `Found *${fonts.length}* styles. Pick one by replying with:\n`;
             msg += `*${prefix}fancy<number> your text*\n\n`;
             msg += `Example: ${prefix}fancy1 DML-XMD\n`;
             msg += `Example: ${prefix}fancy42 Hello\n\n`;
             msg += `──────────────────\n\n`;
 
-            data.results.forEach((style, i) => {
-                msg += `*${i + 1}.* ${style}\n`;
+            fonts.forEach((font, i) => {
+                msg += `*${i + 1}.* ${font.family}\n`;
             });
 
             msg += `\n> Powered by 𝙳𝙼𝙻-𝚇𝙼𝙳 💀`;
@@ -34,7 +41,8 @@ module.exports = {
 
         } catch (error) {
             await client.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-            m.reply("Failed to load fonts. The API is probably crying. Try later.");
+            console.error(error);
+            m.reply("Failed to load fonts. Google API is probably crying. Try later.");
         }
     }
 };
