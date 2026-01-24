@@ -30,7 +30,7 @@
     "@hapi/boom": "^10.0.0",
     "@shineiichijo/marika": "^3.0.0",
     "@vitalets/google-translate-api": "latest",
-    "@whiskeysockets/baileys": "github:DAUDY17/Dml-Baileys",
+    "@whiskeysockets/baileys": "github:DAUDY17/Dml-Baileys1.git",
     "acrcloud": "^1.4.0",
     "adm-zip": "^0.5.16",
     "aptoide-scraper": "^1.0.1",
