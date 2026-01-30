@@ -17,39 +17,32 @@ module.exports = async (context) => {
 
     if (!numberToAdd || !/^\d+$/.test(numberToAdd)) {
       return await m.reply(
-       const msg =
-`┏━━〔 ⚠ SYSTEM WARNING 〕━━┓
+        `┏━━〔 ⚠ SYSTEM WARNING 〕━━┓
 ┃ ▸ Invalid input detected 
 ┃ ▸ Use a valid number
 ┃ ▸ Or quote a target user
-┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`;
-
+┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`
       );
     }
 
     const sudoUsers = await getSudoUsers();
     if (sudoUsers.includes(numberToAdd)) {
       return await m.reply(
-       const msg =
-`┏━━〔 🛡 SUDO STATUS 〕━━┓
+        `┏━━〔 🛡 SUDO STATUS 〕━━┓
 ┃ ▸ Access already granted 🥶
 ┃ ▸ ${numberToAdd}
 ┃ ▸ Member of the elite ranks
-┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`;
-
+┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`
       );
     }
 
     await addSudoUser(numberToAdd);
     await m.reply(
-     const msg =
-`┏━━〔 SYSTEM UPDATE 〕━━┓
+      `┏━━〔 SYSTEM UPDATE 〕━━┓
 ┃ ▸ Privileges granted 🔥
 ┃ ▸ User: ${numberToAdd}
 ┃ ▸ Rank: SUDO KING 🤔
-┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
-
+┗━━━━━━━━━━━━━━━━━━━━━━━┛`
     );
   });
 };
-//DML
