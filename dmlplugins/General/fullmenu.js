@@ -93,15 +93,15 @@ module.exports = {
       menuText += `╰─────────────\n\n`;
     }
 
-    menuText += `> Pσɯҽɾҽԃ Ⴆყ dml`;
+    menuText += `> Powered by Dml`;
 
     await client.sendMessage(m.chat, {
       text: menuText,
       contextInfo: {
         externalAdReply: {
           showAdAttribution: false,
-          title: `DML-BOT`,
-          body: `Pσɯҽɾҽԃ Ⴆყ Dml`,
+          title: `DML-MD`,
+          body: `Poowered by Dml`,
           thumbnail: pict,
           sourceUrl: `https://github.com/MLILA17/DML-MD`,
           mediaType: 1,
