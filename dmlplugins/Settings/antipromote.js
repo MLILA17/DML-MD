@@ -9,10 +9,10 @@ module.exports = async (context) => {
 
     if (!jid.endsWith('@g.us')) {
       return await m.reply(
-        `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-        `│❒ Nice try, idiot! 😈\n` +
-        `│❒ This command is for groups only, you moron!\n` +
-        `┗━━━━━━━━━━━━━━━┛`
+`┏━━〔 ⚠ SYSTEM WARNING 〕━━┓
+┃ ▸ Group-only command
+┃ ▸ This action is blocked
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
       );
     }
 
@@ -27,26 +27,29 @@ module.exports = async (context) => {
 
       if (isEnabled === action) {
         return await m.reply(
-          `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-          `│❒ Antipromote is already ${value.toUpperCase()}, you clueless moron! 🥶\n` +
-          `│❒ Stop spamming my commands! 🖕\n` +
-          `┗━━━━━━━━━━━━━━━┛`
+`┏━━〔 ℹ STATUS CHECK 〕━━┓
+┃ ▸ Antipromote already ${value.toUpperCase()} 🥶
+┃ ▸ No changes applied
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
         );
       }
 
       await updateGroupSetting(jid, 'antipromote', action ? 'true' : 'false');
+
       await m.reply(
-        `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-        `│❒ Antipromote ${value.toUpperCase()}! 🔥\n` +
-        `│❒ Promotions are under my control, king! 😈\n` +
-        `┗━━━━━━━━━━━━━━━┛`
+`┏━━〔 ✅ SYSTEM UPDATE 〕━━┓
+┃ ▸ Antipromote ${value.toUpperCase()} 🔥
+┃ ▸ Promotion control enabled
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
       );
     } else {
       await m.reply(
-        `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-        `│❒ Antipromote Status: ${isEnabled ? 'ON 🥶' : 'OFF 😴'}\n` +
-        `│❒ Use "${prefix}antipromote on" or "${prefix}antipromote off", fool!\n` +
-        `┗━━━━━━━━━━━━━━━┛`
+`┏━━〔 📊 ANTIPROMOTE STATUS 〕━━┓
+┃ ▸ Current: ${isEnabled ? 'ON 🥶' : 'OFF 😴'}
+┃ ▸ Commands:
+┃   ${prefix}antipromote on
+┃   ${prefix}antipromote off
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
       );
     }
   });
