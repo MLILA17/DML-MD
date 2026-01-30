@@ -32,7 +32,7 @@ module.exports = async (context) => {
 
       const value = args[0]?.toLowerCase();
       let groupSettings = await getGroupSettings(jid);
-      console.log('Fee-Xmd: Group settings for', jid, ':', groupSettings);
+      console.log('Dml-md: Group settings for', jid, ':', groupSettings);
       let isEnabled = groupSettings?.events === true || groupSettings?.events === 'true';
 
       if (value === 'on' || value === 'off') {
@@ -72,7 +72,7 @@ module.exports = async (context) => {
           text: formatStylishReply(
             `Events Status: ${isEnabled ? 'ON ✅' : 'OFF ❎'}. Pick a vibe, mood`
           ),
-          footer: '> ©POWERED BY DML-MD',
+          footer: '> ©POWERED BY Dml',
           buttons,
           headerType: 1,
           viewOnce: true,
