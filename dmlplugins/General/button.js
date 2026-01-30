@@ -1,7 +1,7 @@
 const { default: makeWASocket } = require('@whiskeysockets/baileys');
 
 module.exports = {
-  name: 'buttonz',
+  name: 'button',
   aliases: ['btn'],
   description: 'Displays a list selection menu',
   run: async (context) => {
@@ -10,7 +10,7 @@ module.exports = {
     try {
       await client.sendMessage(m.chat, {
         text: 'Choose an option from the list:',
-        footer: '𝙳𝙼𝙻-𝚇𝙼𝙳 Bot',
+        footer: 'DML-MD',
         sections: [
           {
             title: 'General Commands',
