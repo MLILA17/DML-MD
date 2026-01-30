@@ -33,7 +33,7 @@ module.exports = async (context) => {
 
     await client.sendMessage(m.chat, {
       text: replyText,
-      footer: `Powered by 𝙳𝙼𝙻-𝙼𝙳`,
+      footer: `Powered by Dml`,
       buttons: [
         { buttonId: `${prefix}dev`, buttonText: { displayText: `👤 ${toFancyFont('DEV')}` }, type: 1 }
       ],
