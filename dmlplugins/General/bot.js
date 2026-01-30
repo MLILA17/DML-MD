@@ -11,7 +11,7 @@ module.exports = {
         const { client, m, botname } = context;
 
         // React to message
-        await client.sendMessage(m.chat, { react: { text: '🤖', key: m.key } });
+        await client.sendMessage(m.chat, { react: { text: '⤵️', key: m.key } });
 
         const settings = await getSettings();  
         const effectivePrefix = settings.prefix || '.';
@@ -32,7 +32,7 @@ module.exports = {
                             {
                                 name: 'single_select',
                                 buttonParamsJson: JSON.stringify({
-                                    title: '📋 Select an Option',
+                                    title: ' Select an Option',
                                     sections: [
                                         {
                                             rows: [
@@ -40,6 +40,8 @@ module.exports = {
                                                 { title: '⚙ Settings', description: 'Bot settings', id: `${effectivePrefix}settings` },
                                                 { title: '🏓 Ping', description: 'Check bot speed', id: `${effectivePrefix}ping` },
                                                 { title: '🔄 Update', description: 'Check for updates', id: `${effectivePrefix}update` },
+                                                { title: '📦 Repo', description: 'Official source code on GitHub', id: `${effectivePrefix}repo` }
+
                                             ],
                                         },
                                     ],
