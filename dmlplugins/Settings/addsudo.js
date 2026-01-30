@@ -30,19 +30,25 @@ module.exports = async (context) => {
     const sudoUsers = await getSudoUsers();
     if (sudoUsers.includes(numberToAdd)) {
       return await m.reply(
-        `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-        `│❒ Already a sudo user, you clueless twit! 🥶\n` +
-        `│❒ ${numberToAdd} is already in the elite ranks.\n` +
-        `╰┈┈┈┈━━━━━━┈┈┈┈◈`
+       const msg =
+`┏━━〔 🛡 SUDO STATUS 〕━━┓
+┃ ▸ Access already granted 🥶
+┃ ▸ ${numberToAdd}
+┃ ▸ Member of the elite ranks
+┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`;
+
       );
     }
 
     await addSudoUser(numberToAdd);
     await m.reply(
-      `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-      `│❒ Bow down! 🔥\n` +
-      `│❒ ${numberToAdd} is now a Sudo King! 😈\n` +
-      `╰┈┈┈┈━━━━━━┈┈┈┈◈`
+     const msg =
+`┏━━〔 SYSTEM UPDATE 〕━━┓
+┃ ▸ Privileges granted 🔥
+┃ ▸ User: ${numberToAdd}
+┃ ▸ Rank: SUDO KING 🤔
+┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
+
     );
   });
 };
