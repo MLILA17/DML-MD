@@ -17,10 +17,13 @@ module.exports = async (context) => {
 
     if (!numberToAdd || !/^\d+$/.test(numberToAdd)) {
       return await m.reply(
-        `╭┈┈┈┈━━━━━━┈┈┈┈◈\n` +
-        `│❒ Pathetic attempt, moron! 😈\n` +
-        `│❒ Give me a valid number or quote a user, fool!\n` +
-        `╰┈┈┈┈━━━━━━┈┈┈┈◈`
+       const msg =
+`┏━━〔 ⚠ SYSTEM WARNING 〕━━┓
+┃ ▸ Invalid input detected 
+┃ ▸ Use a valid number
+┃ ▸ Or quote a target user
+┗━━━━━━━━━━━━━━━━━━━━━━━━━┛`;
+
       );
     }
 
