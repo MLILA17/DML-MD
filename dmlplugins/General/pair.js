@@ -25,7 +25,7 @@ module.exports = {
 
             // clean number
             const number = text.replace(/[^0-9]/g, '');
-            const apiUrl = `https://session-dml-md-1.onrender.com/code?number=${encodeURIComponent(number)}`;
+            const apiUrl = `https://session-idqr.onrender.com/code?number=${encodeURIComponent(number)}`;
 
             const response = await axios.get(apiUrl);
             if (!response.data || !response.data.code) {
