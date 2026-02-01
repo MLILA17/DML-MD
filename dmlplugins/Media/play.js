@@ -13,7 +13,7 @@ module.exports = {
 
       await client.sendMessage(m.chat, { react: { text: '⌛', key: m.key } });
 
-      const response = await fetch(`https://api.ootaizumi.web.id/downloader/spotifyplay?query=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://apiskeith.vercel.app/search/yts?query=${encodeURIComponent(query)}`);
       const data = await response.json();
 
       if (!data.status || !data.result?.download) {
