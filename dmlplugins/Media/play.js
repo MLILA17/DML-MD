@@ -1,75 +1,127 @@
-const fetch = require("node-fetch");
-
-module.exports = { 
+module.exports = {
   name: 'play',
-  aliases: ['p', 'pl'],
-  description: 'Searches and downloads songs and sends audio',
+  aliases: ['ytmp3', 'ytmp3doc', 'audiodoc', 'yta'],
+  description: 'Download Video from YouTube and send audio',
+
   run: async (context) => {
     const { client, m } = context;
+    const axios = require("axios");
 
     try {
-      const query = (m.text || "").trim();
-      if (!query) return m.reply("Give me a song name, you tone-deaf cretin.");
+      const q = (m.text || "").trim();
 
-      if (query.length > 100)
-        return m.reply("Your 'song title' is longer than my patience. 100 characters MAX.");
-
-      await client.sendMessage(m.chat, {
-        react: { text: '⌛', key: m.key }
-      });
-
-      const response = await fetch(
-        `https://apiskeith.vercel.app/search/yts?query=${encodeURIComponent(query)}`
-      );
-      const data = await response.json();
-
-      if (!data?.status || !data?.result?.download) {
-        await client.sendMessage(m.chat, {
-          react: { text: '❌', key: m.key }
-        });
-        return m.reply(`No song found for "${query}". Your music taste is as bad as your search skills.`);
+      if (!q) {
+        return m.reply(
+          "🎵 *YouTube Audio Downloader*\n\nUsage: play [song name or YouTube link]\n\nExample:\n• play calm down\n• play https://youtu.be/..."
+        );
       }
 
-      const song = data.result;
-      const audioUrl = song.download;
-      const filename = (song.title || "Unknown Song").replace(/[\\/:*?"<>|]/g, "");
-      const artist = song.artists || "Unknown Artist";
-
       await client.sendMessage(m.chat, {
-        react: { text: '✅', key: m.key }
+        react: { text: "🎵", key: m.key }
       });
 
-      // 🔊 Only send audio
+      await m.reply(`🔍 Searching and processing: *${q}*...`);
+
+      let videoUrl;
+      let videoTitle;
+      let videoThumbnail;
+
+      // 🔗 If YouTube link
+      if (/(youtube\.com|youtu\.be)/i.test(q)) {
+        videoUrl = q;
+
+        const videoId = q.match(
+          /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+        )?.[1];
+
+        if (!videoId) {
+          return m.reply("❌ Invalid YouTube URL");
+        }
+
+        videoTitle = "YouTube Audio";
+        videoThumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+      } else {
+        // 🔍 Search YouTube
+        const searchRes = await axios.get(
+          `https://apiskeith.vercel.app/search/yts?query=${encodeURIComponent(q)}`
+        );
+
+        const videos = searchRes.data?.result;
+        if (!Array.isArray(videos) || videos.length === 0) {
+          return m.reply("❌ No videos found for your search");
+        }
+
+        const firstVideo = videos[0];
+        videoUrl = firstVideo.url;
+        videoTitle = firstVideo.title;
+        videoThumbnail = firstVideo.thumbnail;
+      }
+
+      // ⬇️ Download audio
+      const downloadRes = await axios.get(
+        `https://apiskeith.vercel.app/download/audio?url=${encodeURIComponent(videoUrl)}`
+      );
+
+      const downloadUrl = downloadRes.data?.result;
+      if (!downloadUrl) {
+        return m.reply("❌ Failed to get download URL");
+      }
+
+      const fileName = `${videoTitle}.mp3`.replace(/[^\w\s.-]/gi, "");
+
+      const contextInfo = {
+        externalAdReply: {
+          title: videoTitle,
+          body: "Powered by Dml",
+          mediaType: 1,
+          sourceUrl: videoUrl,
+          thumbnailUrl: videoThumbnail,
+          renderLargerThumbnail: false,
+          showAdAttribution: true
+        }
+      };
+
+      // 🎧 Send audio
       await client.sendMessage(
         m.chat,
         {
-          audio: { url: audioUrl },
+          audio: { url: downloadUrl },
           mimetype: "audio/mpeg",
-          fileName: `${filename}.mp3`,
-          contextInfo: {
-            externalAdReply: {
-              title: filename.substring(0, 30),
-              body: artist.substring(0, 30),
-              thumbnailUrl: song.image || "",
-              sourceUrl: song.external_url || "",
-              mediaType: 1,
-              renderLargerThumbnail: true,
-            },
-          },
+          fileName,
+          ptt: false,
+          contextInfo
         },
         { quoted: m }
       );
 
-    } catch (error) {
-      console.error('Play command error:', error);
-
-      await client.sendMessage(m.chat, {
-        react: { text: '❌', key: m.key }
-      });
-
-      await m.reply(
-        `Download failed. Even the universe said no.\nError: ${error.message}`
+      // 📄 Send document version
+      await client.sendMessage(
+        m.chat,
+        {
+          document: { url: downloadUrl },
+          mimetype: "audio/mpeg",
+          fileName,
+          contextInfo: {
+            externalAdReply: {
+              ...contextInfo.externalAdReply,
+              body: "Document version - Powered by Dml"
+            }
+          }
+        },
+        { quoted: m }
       );
+
+      console.log(`✅ Sent audio: ${videoTitle}`);
+
+    } catch (error) {
+      console.error("❌ Play command error:", error);
+
+      if (error.code === "ECONNABORTED") {
+        await m.reply("❌ Request timeout. Please try again.");
+      } else {
+        await m.reply("❌ API error. Please try another song or check your link.");
+      }
     }
   }
 };
