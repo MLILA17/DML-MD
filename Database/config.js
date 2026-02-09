@@ -44,7 +44,7 @@ async function initializeDatabase() {
         const defaultSettings = {
             prefix: '.',
             packname: 'DML-MD',
-            mode: 'private',
+            mode: 'public',
             presence: 'online',
             autoview: 'true',
             autolike: 'false',
