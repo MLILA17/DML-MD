@@ -1,5 +1,3 @@
-const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
-
 // Reusable function to delete a message
 async function deleteRepliedMessage(client, m, deleteKey) {
     const botJid = client.user.id.split(':')[0] + '@s.whatsapp.net';
@@ -25,17 +23,15 @@ async function deleteRepliedMessage(client, m, deleteKey) {
 module.exports = {
     name: 'del',
     aliases: ['delete', 'd'],
-    description: 'Deletes the replied-to or quoted message with confirmation buttons',
+    description: 'Deletes the replied-to or quoted message immediately',
     run: async (context) => {
-        const { client, m, botname } = context;
-
-        if (!botname) return m.reply('Bot error: No botname found in context.');
+        const { client, m } = context;
 
         try {
-            // Identify message to delete
             let deleteKey = null;
             let quotedSender = null;
 
+            // Identify message to delete
             if (m.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
                 const ctx = m.message.extendedTextMessage.contextInfo;
                 deleteKey = {
@@ -57,57 +53,21 @@ module.exports = {
                 return m.reply('Please reply to or quote a message to delete.');
             }
 
-            // Send confirmation buttons
-            const buttonsMessage = {
-                text: 'Do you really want to delete this message?',
-                footer: `Bot: ${botname}`,
-                buttons: [
-                    { buttonId: `del_yes_${deleteKey.id}`, buttonText: { displayText: '✅ Yes' }, type: 1 },
-                    { buttonId: `del_no_${deleteKey.id}`, buttonText: { displayText: '❌ No' }, type: 1 }
-                ],
-                headerType: 1
-            };
+            // Delete immediately
+            await deleteRepliedMessage(client, m, deleteKey);
+            await m.reply('Message deleted successfully.');
 
-            const sentMsg = await client.sendMessage(m.chat, buttonsMessage, { quoted: m });
-
-            // Temporary listener for this button
-            const buttonListener = async (msgUpsert) => {
-                const msg = msgUpsert.messages[0];
-                if (!msg.message?.buttonsResponseMessage) return;
-
-                const buttonId = msg.message.buttonsResponseMessage.selectedButtonId;
-                if (!buttonId.includes(deleteKey.id)) return;
-
-                if (buttonId === `del_yes_${deleteKey.id}`) {
-                    try {
-                        await deleteRepliedMessage(client, m, deleteKey);
-                        await client.sendMessage(m.chat, { text: 'Message deleted successfully.' });
-                    } catch (err) {
-                        if (err.message === 'BOT_NOT_ADMIN') {
-                            await client.sendMessage(m.chat, {
-                                text: `I am not an admin and cannot delete @${quotedSender.split('@')[0]}'s message.`,
-                                mentions: [quotedSender]
-                            });
-                        } else if (err.message === 'DM_NOT_BOT_MESSAGE') {
-                            await client.sendMessage(m.chat, { text: 'Cannot delete a DM from another user.' });
-                        } else {
-                            console.error('Delete error:', err);
-                            await client.sendMessage(m.chat, { text: 'Failed to delete the message.' });
-                        }
-                    }
-                } else if (buttonId === `del_no_${deleteKey.id}`) {
-                    await client.sendMessage(m.chat, { text: 'Delete canceled.' });
-                }
-
-                // Remove listener after handling
-                client.ev.removeListener('messages.upsert', buttonListener);
-            };
-
-            client.ev.on('messages.upsert', buttonListener);
-
-        } catch (error) {
-            console.error('Del command error:', error);
-            await m.reply('Failed to process delete command. Please try again later.');
+        } catch (err) {
+            if (err.message === 'BOT_NOT_ADMIN') {
+                await m.reply(`I am not an admin and cannot delete @${quotedSender.split('@')[0]}'s message.`, {
+                    mentions: [quotedSender]
+                });
+            } else if (err.message === 'DM_NOT_BOT_MESSAGE') {
+                await m.reply('Cannot delete a DM from another user.');
+            } else {
+                console.error('Delete error:', err);
+                await m.reply('Failed to delete the message.');
+            }
         }
     }
 };
