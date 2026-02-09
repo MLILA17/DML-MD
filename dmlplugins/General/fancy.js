@@ -1,170 +1,100 @@
+/**
+ * Fancy Text Generator (API Version)
+ * Powered by DML
+ */
+
 let fetchFn;
 try {
-  fetchFn = global.fetch || require("node-fetch");
+  fetchFn = global.fetch ?? require("node-fetch");
 } catch {
   fetchFn = global.fetch;
 }
 
-const CHAT_CACHE = new Map(); // chatId -> { text, results }
-
 module.exports = {
-  pattern: "fancy",
-  desc: "Convert text into fancy fonts",
-  category: "fun",
-  react: "🎨",
-  filename: __filename,
-  use: "fancy <text> | fancy <number> | reply + fancy",
+  name: "fancy",
+  aliases: ["styles", "fancytext"],
+  description: "Convert text into fancy styles using API",
+  category: "Fun",
 
-  execute: async (conn, mek, m, { args, reply, from }) => {
-    try {
-      if (!fetchFn) return reply("⚠️ Fetch is not available on this runtime.");
+  run: async (context) => {
+    const { client, m, prefix } = context;
 
-      // ===== Get quoted text safely =====
-      const getQuotedText = () => {
-        const q =
-          m?.quoted?.message ||
-          mek?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-        if (!q) return null;
+    // Safely get text
+    const text = m.text?.replace(prefix + "fancy", "").trim();
 
-        return (
-          q.conversation ||
-          q.extendedTextMessage?.text ||
-          q.imageMessage?.caption ||
-          q.videoMessage?.caption ||
-          q.documentMessage?.fileName ||
-          null
-        );
-      };
+    // Help menu
+    if (!text) {
+      const help = `
+┏━━━✦ DML • FANCY ✦━━━┓
+┃ ✨ Fancy Text Generator
+┃
+┃ 📌 Usage:
+┃   ${prefix}fancy <style> <text>
+┃
+┃ 🧪 Example:
+┃   ${prefix}fancy 1 dml
+┗━━━━━━━━━━━━━━━━━━━━┛
+`;
+      return client.sendMessage(m.chat, { text: help }, { quoted: m });
+    }
 
-      const quotedText = getQuotedText();
+    const args = text.split(/\s+/);
+    const styleNum = Number(args.shift());
 
-      // ===== Safe chat ID =====
-      const chatId = from || m.chat || mek.key?.remoteJid || "global";
-
-      let styleNumber = null;
-      let textToConvert = null;
-
-      // ===== Argument logic =====
-      if (args.length === 0) {
-        if (quotedText) {
-          textToConvert = quotedText;
-        } else {
-          return reply(
-            "❌ Provide text or reply to a message.\nExample:\n.fancy Hello"
-          );
-        }
-      } else {
-        if (!isNaN(args[0])) {
-          styleNumber = parseInt(args[0], 10);
-
-          if (args.length > 1) {
-            textToConvert = args.slice(1).join(" ");
-          } else if (quotedText) {
-            textToConvert = quotedText;
-          } else {
-            const cached = CHAT_CACHE.get(chatId);
-            if (!cached) {
-              return reply(
-                "❌ No previous text in this chat.\nUse `.fancy <text>` first."
-              );
-            }
-            textToConvert = cached.text;
-          }
-        } else {
-          textToConvert = args.join(" ");
-        }
-      }
-
-      if (!textToConvert) return reply("⚠️ Could not determine text.");
-
-      // ===== Call GiftedTech Fancy API =====
-      const apiUrl = `https://api.giftedtech.co.ke/api/tools/fancy?apikey=gifted&text=${encodeURIComponent(
-        textToConvert
-      )}`;
-
-      const res = await fetchFn(apiUrl);
-      if (!res.ok) return reply("⚠️ Failed to fetch styles from API.");
-
-      const data = await res.json();
-      if (!data || !Array.isArray(data.results)) {
-        return reply("⚠️ API returned no styles.");
-      }
-
-      // Cache results
-      CHAT_CACHE.set(chatId, {
-        text: textToConvert,
-        results: data.results,
-      });
-
-      // ===== Mention sender safely =====
-      const mentionedJid = m.sender ? [m.sender] : [];
-
-      // ===== If user selected a style =====
-      if (styleNumber !== null) {
-        if (styleNumber < 1 || styleNumber > data.results.length) {
-          return reply(
-            `⚠️ Invalid style number.\nChoose between 1 and ${data.results.length}.`
-          );
-        }
-
-        const chosen = data.results[styleNumber - 1];
-
-        await conn.sendMessage(
-          chatId,
-          {
-            text: `🎨 *Fancy Style ${styleNumber} — ${chosen.name}*\n\n${chosen.result}`,
-            contextInfo: {
-              mentionedJid,
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: "120363403958418756@newsletter",
-                newsletterName: "Dml-tech",
-                serverMessageId: 200,
-              },
-            },
-          },
-          { quoted: mek }
-        );
-        return;
-      }
-
-      // ===== Show all styles =====
-      let msg =
-        `🎨 *Fancy styles for:* ${textToConvert}\n` +
-        `_Pick one using:_ \`.fancy <number>\`\n\n`;
-
-      data.results.forEach((f, i) => {
-        msg += `*${i + 1}*. ${f.result} (${f.name})\n`;
-      });
-
-      await conn.sendMessage(
-        chatId,
-        {
-          text: msg,
-          contextInfo: {
-            mentionedJid,
-            forwardingScore: 200,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: "120363403958418756@newsletter",
-              newsletterName: "Dml-tech",
-              serverMessageId: 200,
-            },
-          },
-        },
-        { quoted: mek }
-      );
-    } catch (err) {
-      console.error("Error in fancy.js:", err);
-
-      await conn.sendMessage(
-        from || m.chat || mek.key?.remoteJid,
-        {
-          text: "⚠️ Error converting text. Try again later.",
-        },
-        { quoted: mek }
+    if (!Number.isInteger(styleNum)) {
+      return client.sendMessage(
+        m.chat,
+        { text: `❌ Invalid style number!\nExample: ${prefix}fancy 1 dml` },
+        { quoted: m }
       );
     }
-  },
+
+    const inputText = args.join(" ");
+    if (!inputText) {
+      return client.sendMessage(
+        m.chat,
+        { text: `❌ No text provided!\nExample: ${prefix}fancy ${styleNum} dml` },
+        { quoted: m }
+      );
+    }
+
+    try {
+      const url = `https://api.giftedtech.co.ke/api/tools/fancy?apikey=gifted&style=${styleNum}&text=${encodeURIComponent(inputText)}`;
+
+      const res = await fetchFn(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      if (!data?.result) {
+        throw new Error("Invalid API response");
+      }
+
+      await client.sendMessage(
+        m.chat,
+        { text: data.result },
+        { quoted: m }
+      );
+
+    } catch (err) {
+      console.error("Fancy API Error:", err);
+
+      await client.sendMessage(
+        m.chat,
+        {
+          text: `
+┏━━━✖ DML • FANCY ✖━━━┓
+┃ ⚠️ Fancy Generation Failed
+┃
+┃ ❌ Could not style text
+┃ 🌐 API may be offline
+┃
+┃ 🔁 Try again later
+┗━━━━━━━━━━━━━━━━━━━━┛
+`
+        },
+        { quoted: m }
+      );
+    }
+  }
 };
