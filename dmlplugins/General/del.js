@@ -58,43 +58,25 @@ module.exports = {
             }
 
             // Send confirmation buttons
-            const confirmMsg = generateWAMessageFromContent(
-                m.chat,
-                {
-                    interactiveMessage: {
-                        body: { text: 'Do you really want to delete this message?' },
-                        footer: { text: `Bot: ${botname}` },
-                        nativeFlowMessage: {
-                            buttons: [
-                                {
-                                    name: 'single_select',
-                                    buttonParamsJson: JSON.stringify({
-                                        title: 'Confirm Delete',
-                                        sections: [
-                                            {
-                                                rows: [
-                                                    { title: '✅ Yes', description: 'Delete this message', id: `del_yes_${deleteKey.id}` },
-                                                    { title: '❌ No', description: 'Cancel delete', id: `del_no_${deleteKey.id}` }
-                                                ]
-                                            }
-                                        ]
-                                    })
-                                }
-                            ]
-                        }
-                    }
-                },
-                { quoted: m }
-            );
+            const buttonsMessage = {
+                text: 'Do you really want to delete this message?',
+                footer: `Bot: ${botname}`,
+                buttons: [
+                    { buttonId: `del_yes_${deleteKey.id}`, buttonText: { displayText: '✅ Yes' }, type: 1 },
+                    { buttonId: `del_no_${deleteKey.id}`, buttonText: { displayText: '❌ No' }, type: 1 }
+                ],
+                headerType: 1
+            };
 
-            await client.relayMessage(m.chat, confirmMsg.message, { messageId: confirmMsg.key.id });
+            const sentMsg = await client.sendMessage(m.chat, buttonsMessage, { quoted: m });
 
-            // Listen for button responses
-            client.ev.on('messages.upsert', async (msgUpsert) => {
+            // Temporary listener for this button
+            const buttonListener = async (msgUpsert) => {
                 const msg = msgUpsert.messages[0];
                 if (!msg.message?.buttonsResponseMessage) return;
 
                 const buttonId = msg.message.buttonsResponseMessage.selectedButtonId;
+                if (!buttonId.includes(deleteKey.id)) return;
 
                 if (buttonId === `del_yes_${deleteKey.id}`) {
                     try {
@@ -116,7 +98,12 @@ module.exports = {
                 } else if (buttonId === `del_no_${deleteKey.id}`) {
                     await client.sendMessage(m.chat, { text: 'Delete canceled.' });
                 }
-            });
+
+                // Remove listener after handling
+                client.ev.removeListener('messages.upsert', buttonListener);
+            };
+
+            client.ev.on('messages.upsert', buttonListener);
 
         } catch (error) {
             console.error('Del command error:', error);
