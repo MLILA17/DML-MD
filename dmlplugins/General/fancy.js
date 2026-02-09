@@ -16,7 +16,7 @@ module.exports = {
   name: "fancy",
   aliases: ["styles", "fancytext"],
   description: "Convert text into various fancy fonts",
-  category: "Fun",
+  category: "General",
 
   run: async (context) => {
     const { client, m, prefix } = context;
