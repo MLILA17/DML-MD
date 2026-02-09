@@ -48,7 +48,7 @@ module.exports = async (context) => {
                             title:
 `╭─〔 ✅ COMMAND LOCATED 〕╮
 │
-│ 📂 Category : ${category.name}
+│ 📂 Category : ${category}
 │ 📄 File     : ${commandName}.js
 │
 ╰────────────────────╯
