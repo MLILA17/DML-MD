@@ -1,0 +1,99 @@
+/**
+ * Fancy Text Generator (API Version)
+ * Powered by Dml
+ */
+
+let fetchFn;
+try {
+  fetchFn = global.fetch || require("node-fetch");
+} catch {
+  fetchFn = global.fetch;
+}
+
+module.exports = {
+  name: 'fancy',
+  aliases: ['styles', 'fancytext'],
+  description: 'Convert text into fancy styles using API',
+  category: 'Fun',
+
+  run: async (context) => {
+    const { client, m, text, prefix } = context;
+
+    // Help menu
+    if (!text) {
+      const help = `
+┏━━━✦ DML • FANCY ✦━━━┓
+┃ ✨ Fancy Text Generator
+┃ 
+┃ 📌 Usage:
+┃   ${prefix}fancy <style> <text>
+┃ 
+┃ 🧪 Example:
+┃   ${prefix}fancy 1 dml
+┗━━━━━━━━━━━━━━━━━━━━┛
+
+`;
+      return client.sendMessage(m.chat, { text: help }, { quoted: m });
+    }
+
+    const args = text.trim().split(/\s+/);
+    const styleNum = parseInt(args[0]);
+
+    if (isNaN(styleNum)) {
+      return client.sendMessage(
+        m.chat,
+        { text: `❌ Invalid style number!\nExample: ${prefix}fancy 1 dml` },
+        { quoted: m }
+      );
+    }
+
+    const inputText = args.slice(1).join(" ");
+    if (!inputText) {
+      return client.sendMessage(
+        m.chat,
+        { text: `❌ No text provided!\nExample: ${prefix}fancy ${styleNum} dml` },
+        { quoted: m }
+      );
+    }
+
+    try {
+      const url =
+        `https://api.giftedtech.co.ke/api/tools/fancy` +
+        `?apikey=gifted` +
+        `&text=${encodeURIComponent(inputText)}` +
+        `&style=${styleNum}`;
+
+      const res = await fetchFn(url);
+      const data = await res.json();
+
+      // API response safety
+      if (!data || !data.result) {
+        throw new Error("Invalid API response");
+      }
+
+      await client.sendMessage(
+        m.chat,
+        { text: data.result },
+        { quoted: m }
+      );
+
+    } catch (err) {
+      console.error("Fancy API Error:", err);
+      await client.sendMessage(
+        m.chat,
+        {
+          text: `┏━━━✖ DML • FANCY ✖━━━┓
+┃ ⚠️ Fancy Generation Failed
+┃
+┃ ❌ Unable to style your text
+┃ 🌐 API may be offline
+┃
+┃ 🔁 Please try again later
+┗━━━━━━━━━━━━━━━━━━━━┛
+`
+        },
+        { quoted: m }
+      );
+    }
+  }
+};
