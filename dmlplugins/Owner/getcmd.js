@@ -4,95 +4,103 @@ module.exports = async (context) => {
     const { client, m, text, prefix } = context;
 
     try {
-        // Restrict access to the bot owner only
+        // OWNER ONLY
         const allowedNumber = '255622220680@s.whatsapp.net';
         if (m.sender !== allowedNumber) {
-            return await client.sendMessage(m.chat, {
-                text: `❌ *Access denied!*\nThis command is restricted to the bot owner only.\n> Powered by DML-TECH`
-            }, { quoted: m });
+            return client.sendMessage(
+                m.chat,
+                { text: '❌ Access denied!\nOwner only command.\n> Powered by DML-TECH' },
+                { quoted: m }
+            );
         }
 
         if (!text) {
-            return await client.sendMessage(m.chat, {
-                text: `📄 *Please provide a command name!*\nExample: *${prefix}getcmd ping*\n> Powered by DML-TECH`
-            }, { quoted: m });
+            return client.sendMessage(
+                m.chat,
+                { text: `📄 Usage:\n${prefix}getcmd play\n> Powered by DML-TECH` },
+                { quoted: m }
+            );
         }
 
         const categories = [
-            { name: 'General' },
-            { name: 'Settings' },
-            { name: 'Owner' },
-            { name: 'Heroku' },
-            { name: 'Wa-Privacy' },
-            { name: 'Groups' },
-            { name: 'AI' },
-            { name: '+18' },
-            { name: 'Logo' },
-            { name: 'Search' },
-            { name: 'Coding' },
-            { name: 'Media' },
-            { name: 'Editing' },
-            { name: 'Utils' }
+            'General','Settings','Owner','Heroku','Wa-Privacy','Groups',
+            'AI','+18','Logo','Search','Coding','Media','Editing','Utils'
         ];
 
-        let fileFound = false;
         const commandName = text.endsWith('.js') ? text.slice(0, -3) : text;
+        let found = false;
 
         for (const category of categories) {
-            const filePath = `./dmlplugins/${category.name}/${commandName}.js`;
+            const filePath = `./dmlplugins/${category}/${commandName}.js`;
 
             try {
-                const data = await fs.readFile(filePath, 'utf8');
+                const sourceCode = await fs.readFile(filePath, 'utf8');
 
-                const previewText = 
-`╭─〔 ✅ COMMAND LOCATED 〕╮
-│
-│ 📂 Category : ${category.name}
-│ 📄 File     : ${commandName}.js
-│
-╰────────────────────╯
+                const preview = sourceCode.length > 3500
+                    ? sourceCode.slice(0, 3500) + '\n\n// ... truncated'
+                    : sourceCode;
 
-📜 *Source Code Preview*
-\`\`\`javascript
-${data.slice(0, 3500)}
+                await client.sendMessage(
+                    m.chat,
+                    {
+                        interactiveMessage: {
+                            header: '📦 DML-MD COMMAND SOURCE',
+                            title:
+`✅ Command Found
+
+📂 Category : ${category}
+📄 File     : ${commandName}.js
+
+📜 Preview:
+\`\`\`js
+${preview}
 \`\`\`
 
-📋 Click *COPY SOURCE* to get full code
-⚡ _Powered by **DML-TECH**_`;
-
-                await client.sendMessage(m.chat, {
-                    text: previewText,
-                    buttons: [
-                        {
-                            buttonId: `${prefix}copycmd ${commandName}`,
-                            buttonText: { displayText: 'COPY SOURCE' },
-                            type: 1
+Tap below to copy full source code`,
+                            footer: '> © Powered by DML-TECH',
+                            buttons: [
+                                {
+                                    name: 'cta_copy',
+                                    buttonParamsJson: JSON.stringify({
+                                        display_text: ' Copy Source',
+                                        id: 'copy_cmd_source',
+                                        copy_code: sourceCode
+                                    })
+                                }
+                            ]
                         }
-                    ],
-                    headerType: 1
-                }, { quoted: m });
+                    },
+                    { quoted: m }
+                );
 
-                fileFound = true;
+                found = true;
                 break;
+
             } catch (err) {
                 if (err.code !== 'ENOENT') {
-                    return await client.sendMessage(m.chat, {
-                        text: `⚠️ *Error reading command file:* ${err.message}\n> Powered by DML-TECH`
-                    }, { quoted: m });
+                    return client.sendMessage(
+                        m.chat,
+                        { text: `⚠️ Error reading file:\n${err.message}` },
+                        { quoted: m }
+                    );
                 }
             }
         }
 
-        if (!fileFound) {
-            await client.sendMessage(m.chat, {
-                text: `❌ *Command not found:* ${commandName}\nPlease try a valid command name.\n> Powered by DML-TECH`
-            }, { quoted: m });
+        if (!found) {
+            await client.sendMessage(
+                m.chat,
+                { text: `❌ Command not found: *${commandName}*` },
+                { quoted: m }
+            );
         }
 
     } catch (error) {
-        console.error('Error in getcmd:', error);
-        await client.sendMessage(m.chat, {
-            text: `⚠️ *Failed to process request:* ${error.message}\nPowered by *DML-MD v3*`
-        }, { quoted: m });
+        console.error('GETCMD ERROR:', error);
+        await client.sendMessage(
+            m.chat,
+            { text: `⚠️ Failed:\n${error.message}` },
+            { quoted: m }
+        );
     }
 };
