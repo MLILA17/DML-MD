@@ -23,13 +23,12 @@ async function deleteRepliedMessage(client, m, deleteKey) {
 module.exports = {
     name: 'del',
     aliases: ['delete', 'd'],
-    description: 'Deletes the replied-to or quoted message immediately',
+    description: 'Deletes the replied-to or quoted message silently',
     run: async (context) => {
         const { client, m } = context;
 
         try {
             let deleteKey = null;
-            let quotedSender = null;
 
             // Identify message to delete
             if (m.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
@@ -40,7 +39,6 @@ module.exports = {
                     fromMe: ctx.participant === client.user.id.split(':')[0] + '@s.whatsapp.net',
                     participant: ctx.participant
                 };
-                quotedSender = ctx.participant;
             } else if (m.quoted && m.quoted.message) {
                 deleteKey = {
                     remoteJid: m.quoted.key.remoteJid,
@@ -48,26 +46,16 @@ module.exports = {
                     fromMe: m.quoted.fromMe,
                     participant: m.quoted.key.participant || m.quoted.sender
                 };
-                quotedSender = m.quoted.sender;
             } else {
-                return m.reply('Please reply to or quote a message to delete.');
+                return; // No message replied/quoted, do nothing
             }
 
-            // Delete immediately
+            // Delete silently
             await deleteRepliedMessage(client, m, deleteKey);
-            await m.reply('Message deleted successfully.');
 
         } catch (err) {
-            if (err.message === 'BOT_NOT_ADMIN') {
-                await m.reply(`I am not an admin and cannot delete @${quotedSender.split('@')[0]}'s message.`, {
-                    mentions: [quotedSender]
-                });
-            } else if (err.message === 'DM_NOT_BOT_MESSAGE') {
-                await m.reply('Cannot delete a DM from another user.');
-            } else {
-                console.error('Delete error:', err);
-                await m.reply('Failed to delete the message.');
-            }
+            console.error('Delete error:', err);
+            // Silent fail: don't send any message to chat
         }
     }
 };
