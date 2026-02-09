@@ -15,7 +15,11 @@ module.exports = async (context) => {
   const { client, m, text } = context;
 
   const formatStylishReply = (message) => {
-    return `╭┈┈┈┈━━━━━━┈┈┈┈◈◈\n│❒ ${message}\n╰┈┈┈┈━━━━━━┈┈┈┈◈\n> ©POWERED BY YOU`;
+    return `┌─〔 SYSTEM OUTPUT 〕─┐
+│ ▸ ${message}
+└────────────────────┘
+[ POWERED BY :: YOU ]
+`;
   };
 
   if (!text || !isValidYouTubeUrl(text)) {
