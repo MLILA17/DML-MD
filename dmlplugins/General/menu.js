@@ -42,26 +42,26 @@ module.exports = {
         // Professional menu text
         const menuText = `
 ╔══════════════════════╗
-║ 🤖  *${botname}*  🤖
+║      🤖  *${botname}*  🤖
 ╚══════════════════════╝
 
 👋 Hello *@${m.pushName}*  
 Welcome to your smart assistant
 
-╭─── ❖ BOT STATUS ❖ ───╮
+╭─ ❖ BOT STATUS ❖ ─╮
 │ ⚡ Prefix : ${effectivePrefix}
 │ 🔰 Mode   : ${mode}
 │ 🧠 Engine : Baileys MD
-╰──────────────────────╯
+╰──────────────────╯
 
-╭─── ❖ MAIN COMMANDS ❖ ───╮
+╭─ ❖ MAIN COMMANDS ❖ ─╮
 │ 🌟 ${prefix}fullmenu
 │ 👨‍💻 ${prefix}dev
 │ 📡 ${prefix}ping
 │ ⚙ ${prefix}settings
-╰─────────────────────────╯
+╰──────────────────────╯
 
-╭─── ❖ CATEGORY MENUS ❖ ───╮
+╭──❖ CATEGORY MENUS ❖──╮
 │ 📂 ${prefix}generalmenu
 │ ⚙ ${prefix}settingsmenu
 │ 💱 ${prefix}businessmenu
@@ -75,7 +75,7 @@ Welcome to your smart assistant
 │ 🖌 ${prefix}logomenu
 │ 🔞 ${prefix}+18menu
 │ 🧰 ${prefix}utilsmenu
-╰─────────────────────────╯
+╰───────────────────────╯
 
 ✨ Tip: Use the *buttons below* for faster navigation
 
