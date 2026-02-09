@@ -40,45 +40,49 @@ module.exports = {
         };  
 
         // Professional menu text
-        const menuText = `╭──── DML-MD MENU ───╮
-│👋 Hello, *@${m.pushName}*
-│ Welcome to the DML-MD Bot
-╰───────────────────╯
+        const menuText = `
+╔══════════════════════╗
+║ 🤖  *${botname}*  🤖
+╚══════════════════════╝
 
-◈── BOT INFORMATION ───◈
-💡 *Bot Name:* DML-MD 
-⚡ *Prefix:* ${effectivePrefix}
-🔰 *Mode:* ${mode}
+👋 Hello *@${m.pushName}*  
+Welcome to your smart assistant
 
-◈── SELECT AN OPTION ──◈
-Please select a button below to navigate:
+╭─── ❖ BOT STATUS ❖ ───╮
+│ ⚡ Prefix : ${effectivePrefix}
+│ 🔰 Mode   : ${mode}
+│ 🧠 Engine : Baileys MD
+╰──────────────────────╯
 
-🌟 Core Commands
-  • *${prefix}fullmenu* - Display all commands
-  • *${prefix}dev* - Developer contact
+╭─── ❖ MAIN COMMANDS ❖ ───╮
+│ 🌟 ${prefix}fullmenu
+│ 👨‍💻 ${prefix}dev
+│ 📡 ${prefix}ping
+│ ⚙ ${prefix}settings
+╰─────────────────────────╯
 
-ℹ Bot Info
-  • *${prefix}ping* - Check bot latency
-  • *${prefix}settings* - Show bot settings
+╭─── ❖ CATEGORY MENUS ❖ ───╮
+│ 📂 ${prefix}generalmenu
+│ ⚙ ${prefix}settingsmenu
+│ 💱 ${prefix}businessmenu
+│ 👑 ${prefix}ownermenu
+│ ☁ ${prefix}herokumenu
+│ 🔐 ${prefix}privacymenu
+│ 👥 ${prefix}groupmenu
+│ 🤖 ${prefix}aimenu
+│ ⬇ ${prefix}downloadmenu
+│ 🎨 ${prefix}editingmenu
+│ 🖌 ${prefix}logomenu
+│ 🔞 ${prefix}+18menu
+│ 🧰 ${prefix}utilsmenu
+╰─────────────────────────╯
 
-📂 Categories
-  • *${prefix}generalmenu* - General commands
-  • *${prefix}settingsmenu* - Settings commands
-  • *${prefix}businessmenu* - Currency & finance commands
-  • *${prefix}ownermenu* - Owner only commands
-  • *${prefix}herokumenu* - Heroku commands
-  • *${prefix}privacymenu* - Privacy commands
-  • *${prefix}groupmenu* - Group management
-  • *${prefix}aimenu* - AI & Chat commands
-  • *${prefix}downloadmenu* - Media downloads
-  • *${prefix}editingmenu* - Media editing
-  • *${prefix}logomenu* - Logo & text makers
-  • *${prefix}+18menu* - NSFW commands (18+)
-  • *${prefix}utilsmenu* - Utilities
+✨ Tip: Use the *buttons below* for faster navigation
 
-═════════════════════
-Powered by *${botname}*
+══════════════════════
+© Powered by *${botname}*
 `;
+
 
         const msg = generateWAMessageFromContent(  
             m.chat,  
