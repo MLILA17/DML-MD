@@ -26,11 +26,15 @@ module.exports = {
         .join('');
     };
 
-    let menuText = `╭┈❒ 「 ${botname} Command Menu ⚠ 」\n`;
-    menuText += `│ General Menu Only\n`;
-    menuText += `│\n`;
-    menuText += `│ 🔣 *Prefix*: ${effectivePrefix || 'None'}\n`;
-    menuText += `╰┈┈┈┈━━━━━━┈┈┈┈◈\n\n`;
+    let menuText = `
+╭─ ✦ ${botname} ✦ ─╮
+│   COMMAND MENU
+│─────────────────
+│ 📂 Category : General
+│ 🔣 Prefix   : ${effectivePrefix || 'None'}
+╰─────────────────╯
+`;
+
 
     menuText += `╭┈❒ 「 GENERAL📜 」\n`;
 
