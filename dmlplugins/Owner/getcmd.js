@@ -46,12 +46,14 @@ module.exports = async (context) => {
                         interactiveMessage: {
                             header: '📦 DML-MD COMMAND SOURCE',
                             title:
-`✅ Command Found
+`╭─〔 ✅ COMMAND LOCATED 〕╮
+│
+│ 📂 Category : ${category.name}
+│ 📄 File     : ${commandName}.js
+│
+╰────────────────────╯
 
-📂 Category : ${category}
-📄 File     : ${commandName}.js
-
-📜 Preview:
+📜 *Source Code Preview*
 \`\`\`js
 ${preview}
 \`\`\`
