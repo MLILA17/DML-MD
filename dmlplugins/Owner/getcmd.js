@@ -8,13 +8,13 @@ module.exports = async (context) => {
         const allowedNumber = '255622220680@s.whatsapp.net';
         if (m.sender !== allowedNumber) {
             return await client.sendMessage(m.chat, {
-                text: `❌ *Access denied!* This command is restricted to the bot owner only.\n> Powered by DML-TECH`
+                text: `❌ *Access denied!*\nThis command is restricted to the bot owner only.\n> Powered by DML-TECH`
             }, { quoted: m });
         }
 
         if (!text) {
             return await client.sendMessage(m.chat, {
-                text: `📄 *Please provide a command name!*\nExample: *${prefix}getcmd* or *${prefix}cmd ping*\n> Powered by DML-TECH`
+                text: `📄 *Please provide a command name!*\nExample: *${prefix}getcmd ping*\n> Powered by DML-TECH`
             }, { quoted: m });
         }
 
@@ -44,9 +44,8 @@ module.exports = async (context) => {
             try {
                 const data = await fs.readFile(filePath, 'utf8');
 
-                // NEW FEATURE: show command category
-                const replyText =
-                   `╭─〔 ✅ COMMAND LOCATED 〕╮
+                const previewText = 
+`╭─〔 ✅ COMMAND LOCATED 〕╮
 │
 │ 📂 Category : ${category.name}
 │ 📄 File     : ${commandName}.js
@@ -55,20 +54,31 @@ module.exports = async (context) => {
 
 📜 *Source Code Preview*
 \`\`\`javascript
-${data}
+${data.slice(0, 3500)}
 \`\`\`
 
+📋 Click *COPY SOURCE* to get full code
 ⚡ _Powered by **DML-TECH**_`;
 
-                await client.sendMessage(m.chat, { text: replyText }, { quoted: m });
+                await client.sendMessage(m.chat, {
+                    text: previewText,
+                    buttons: [
+                        {
+                            buttonId: `${prefix}copycmd ${commandName}`,
+                            buttonText: { displayText: 'COPY SOURCE' },
+                            type: 1
+                        }
+                    ],
+                    headerType: 1
+                }, { quoted: m });
+
                 fileFound = true;
                 break;
             } catch (err) {
                 if (err.code !== 'ENOENT') {
-                    await client.sendMessage(m.chat, {
+                    return await client.sendMessage(m.chat, {
                         text: `⚠️ *Error reading command file:* ${err.message}\n> Powered by DML-TECH`
                     }, { quoted: m });
-                    return;
                 }
             }
         }
@@ -78,10 +88,11 @@ ${data}
                 text: `❌ *Command not found:* ${commandName}\nPlease try a valid command name.\n> Powered by DML-TECH`
             }, { quoted: m });
         }
+
     } catch (error) {
-        console.error('Error in getcmd command:', error);
+        console.error('Error in getcmd:', error);
         await client.sendMessage(m.chat, {
-            text: `⚠️ *Oops! Failed to process the command:* ${error.message}\nPowered by *DML-MD v3*`
+            text: `⚠️ *Failed to process request:* ${error.message}\nPowered by *DML-MD v3*`
         }, { quoted: m });
     }
 };
