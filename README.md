@@ -28,7 +28,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/last-commit/MLILA17/DML-MD?style=flat-square&color=DC143C" />
   <img src="https://img.shields.io/github/languages/top/MLILA17/DML-MD?style=flat-square&color=8A2BE2" />
-  <img src="https://img.shields.io/github/license/MLILA17/DML-MD?style=flat-square&color=708090" />
+  <img src="https://komarev.com/ghpvc/?username=MLILA17&label=Profile+Views&color=8E24AA&style=for-the-badge" alt="Views"/>
 </p>
 
 ---
