@@ -25,6 +25,7 @@ module.exports = {
   { name: 'Search', display: '𝙎𝙚𝙖𝙧𝙘𝙝', emoji: '⤵️' },
   { name: 'Media', display: '『 𝙈𝙀𝘿𝙄𝘼 』', emoji: '🎬' },
   { name: 'Editting', display: '『 𝙀𝘿𝙄𝙏 』', emoji: '✂️' },
+  { name: 'God', display: '『 𝙂𝙊𝘿 』', emoji: '📖' },
   { name: 'Logo', display: '『 𝙇𝙊𝙂𝙊 』', emoji: '🎨' },
   { name: '+18', display: '『 18+ 』', emoji: '🔞' },
   { name: 'Utils', display: '『 𝙐𝙏𝙄𝙇𝙎 』', emoji: '🔧' }
