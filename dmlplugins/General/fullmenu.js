@@ -15,19 +15,19 @@ module.exports = {
     const effectivePrefix = settings.prefix || '';
 
     const categories = [
-      { name: 'General', display: 'GEᑎEᖇᗩᒪMENU', emoji: '📜' },
-      { name: 'Settings', display: 'SETTINGSMENU', emoji: '🛠️' },
-      { name: 'Owner', display: 'OWNERMENU', emoji: '👑' },
-      { name: 'Heroku', display: 'HEROKUMENU', emoji: '☁️' },
-      { name: 'Wa-Privacy', display: 'PRIVACYMENU', emoji: '🔒' },
-      { name: 'Groups', display: 'GROUPMENU', emoji: '👥' },
-      { name: 'AI', display: 'AIMENU', emoji: '🧠' },
-      { name: 'Media', display: 'DOWNLOADMENU', emoji: '🎬' },
-      { name: 'Editting', display: 'EDITINGMENU', emoji: '✂️' },
-      { name: 'Logo', display: 'LOGOMENU', emoji: '🎨' },
-      { name: '+18', display: '+18MENU', emoji: '🔞' },
-      { name: 'Utils', display: 'UTILSMENU', emoji: '🔧' }
-    ];
+  { name: 'General', display: '『 𝙂𝙀𝙉𝙀𝙍𝘼𝙇 』', emoji: '📜' },
+  { name: 'Settings', display: '『 𝙎𝙀𝙏𝙏𝙄𝙉𝙂𝙎 』', emoji: '⚙️' },
+  { name: 'Owner', display: '『 𝙊𝙒𝙉𝙀𝙍 』', emoji: '👑' },
+  { name: 'Heroku', display: '『 𝙃𝙀𝙍𝙊𝙆𝙐 』', emoji: '☁️' },
+  { name: 'Wa-Privacy', display: '『 𝙋𝙍𝙄𝙑𝘼𝘾𝙔 』', emoji: '🔐' },
+  { name: 'Groups', display: '『 𝙂𝙍𝙊𝙐𝙋𝙎 』', emoji: '👥' },
+  { name: 'AI', display: '『 𝘼𝙄 』', emoji: '🧠' },
+  { name: 'Media', display: '『 𝙈𝙀𝘿𝙄𝘼 』', emoji: '🎬' },
+  { name: 'Editting', display: '『 𝙀𝘿𝙄𝙏 』', emoji: '✂️' },
+  { name: 'Logo', display: '『 𝙇𝙊𝙂𝙊 』', emoji: '🎨' },
+  { name: '+18', display: '『 18+ 』', emoji: '🔞' },
+  { name: 'Utils', display: '『 𝙐𝙏𝙄𝙇𝙎 』', emoji: '🔧' }
+];
 
     const getGreeting = () => {
       const currentHour = DateTime.now().setZone('Africa/Nairobi').hour;
