@@ -75,6 +75,7 @@ Welcome to your smart assistant
 │ 🖌 ${prefix}logomenu
 │ 🔞 ${prefix}+18menu
 │ 🧰 ${prefix}utilsmenu
+│ 📖 ${prefix}godmenu
 ╰───────────────────────╯
 
 ✨ Tip: Use the *buttons below* for faster navigation
@@ -151,7 +152,8 @@ Welcome to your smart assistant
                                                 { title: '𝐀𝐈𝐌𝐞𝐧𝐮', description: 'AI & chat commands', id: `${prefix}aimenu` },  
                                                 { title: '𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐌𝐞𝐧𝐮', description: 'Media downloaders', id: `${prefix}downloadmenu` },  
                                                 { title: '𝐄𝐝𝐢𝐭𝐢𝐧𝐠𝐌𝐞𝐧𝐮', description: 'Media editing tools', id: `${prefix}editingmenu` },  
-                                                { title: '𝐋𝐨𝐠𝐨𝐌𝐞𝐧𝐮', description: 'Logo & text makers', id: `${prefix}logomenu` },  
+                                                { title: '𝐋𝐨𝐠𝐨𝐌𝐞𝐧𝐮', description: 'Logo & text makers', id: `${prefix}logomenu` },
+                                                { title: '𝗚𝗼𝗱 𝐌𝐞𝐧𝐮', description: 'Read Holy Bible and Quran', id: `${prefix}godmenu` },
                                                 { title: '+𝟏𝟖𝐌𝐞𝐧𝐮', description: 'NSFW commands (18+)', id: `${prefix}+18menu` },  
                                                 { title: '𝐔𝐭𝐢𝐥𝐬𝐌𝐞𝐧𝐮', description: 'Utility commands', id: `${prefix}utilsmenu` },  
                                             ],  
