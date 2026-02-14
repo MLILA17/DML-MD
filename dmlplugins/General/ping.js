@@ -1,8 +1,10 @@
 const os = require("os");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
     name: "ping",
-    aliases: ["p", "status"],
+    aliases: ["p", "status", "speed"],
     description: "Displays bot latency and system health",
     run: async (context) => {
         const { client, m } = context;
@@ -10,19 +12,31 @@ module.exports = {
         try {
             const start = Date.now();
 
-            // Subtle reaction
-            await client.sendMessage(m.chat, {
-                react: { text: "📡", key: m.key }
-            });
+            /* ===== RANDOM IMAGE FROM /Dmlimages ===== */
+            const dmlFolder = path.join(__dirname, "../Dmlimages");
+            let imageBuffer = null;
 
-            // Measure latency
-            const pingMsg = await client.sendMessage(m.chat, {
-                text: "Checking system status..."
-            }, { quoted: m });
+            if (fs.existsSync(dmlFolder)) {
+                const images = fs.readdirSync(dmlFolder)
+                    .filter(file => /\.(jpg|jpeg|png)$/i.test(file));
+
+                if (images.length > 0) {
+                    const randomImage = images[Math.floor(Math.random() * images.length)];
+                    imageBuffer = fs.readFileSync(path.join(dmlFolder, randomImage));
+                }
+            }
+
+            /* ===== RANDOM REACTION ===== */
+            const reactionEmojis = ['🔥','⚡','🚀','💨','🎯','🎉','🌟','💥','🕐','🔹'];
+            const reactionEmoji = reactionEmojis[Math.floor(Math.random() * reactionEmojis.length)];
+
+            await client.sendMessage(m.chat, {
+                react: { text: reactionEmoji, key: m.key }
+            });
 
             const latency = Date.now() - start;
 
-            // System stats
+            /* ===== SYSTEM INFO ===== */
             const uptime = process.uptime();
             const usedMem = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
             const totalMem = (os.totalmem() / 1024 / 1024).toFixed(0);
@@ -37,32 +51,58 @@ module.exports = {
             };
 
             const health =
-                latency < 150 ? "Excellent" :
-                latency < 300 ? "Good" :
-                latency < 600 ? "Fair" : "Poor";
+                latency < 150 ? "Excellent 🟢" :
+                latency < 300 ? "Good 🟢" :
+                latency < 600 ? "Fair 🟡" : "Poor 🔴";
 
-            await client.sendMessage(
-                m.chat,
-                {
-                    text:
-`╭───〔 🤖 BOT STATUS 〕───╮
-│
-│  📶 Latency      : ${latency} ms
-│  ⏱️ Uptime       : ${formatUptime(uptime)}
-│
-│  🧠 Memory Usage :
-│   ├ Used         : ${usedMem} MB
-│   ├ Free         : ${freeMem} MB
-│   └ Total        : ${totalMem} MB
-│
-│  🖥 Platform     : ${platform}
-│  🩺 Health       : ${health}
-│  🌐 Network      : Online
-│
-╰────〔 DML-MD 〕──────╯`
-                },
-                { quoted: pingMsg }
-            );
+            const text =
+`╔════❰ 🤖 DML-MD STATUS ❱════╗
+║
+║ 📶 *Latency:* ${latency} ms
+║ ⏱️ *Uptime:* ${formatUptime(uptime)}
+║
+║ 🧠 *Memory*
+║   ├ Used  : ${usedMem} MB
+║   ├ Free  : ${freeMem} MB
+║   └ Total : ${totalMem} MB
+║
+║ 🖥 *Platform:* ${platform}
+║ 🩺 *Health:* ${health}
+║ 🌐 *Network:* Online
+║
+╚════════════════════════════╝`;
+
+            /* ===== SEND WITH IMAGE + NEWSLETTER STYLE ===== */
+            if (imageBuffer) {
+                await client.sendMessage(m.chat, {
+                    image: imageBuffer,
+                    caption: text,
+                    contextInfo: {
+                        mentionedJid: [m.sender],
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: '120363403958418756@newsletter',
+                            newsletterName: "DML-STATUS",
+                            serverMessageId: 300
+                        }
+                    }
+                }, { quoted: m });
+            } else {
+                await client.sendMessage(m.chat, {
+                    text,
+                    contextInfo: {
+                        mentionedJid: [m.sender],
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: '120363403958418756@newsletter',
+                            newsletterName: "DML-STATUS",
+                            serverMessageId: 300
+                        }
+                    }
+                }, { quoted: m });
+            }
 
         } catch (err) {
             console.error("Ping command error:", err);
