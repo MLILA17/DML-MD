@@ -95,7 +95,7 @@ module.exports = async (context) => {
                 {
                     interactiveMessage: {
                         body: {
-                            text: `🆕 Update Available, Bro\n\nNew version found. You're still using outdated Dml-Md Bot.\n\n📌 *Commit:* ${latestCommit.commit.message}\n👤 *Author:* ${latestCommit.commit.author.name}\n🕒 *Date:* ${new Date(latestCommit.commit.author.date).toLocaleString()}\n\nTo update your worthless bot, tap the button below. if you're unable to tap the buttons type ${prefix}trigger Don't ask me how to tap, you monkey. 🐒😂`
+                            text: `🆕 Update Available, Bro\n\nNew version found. You're still using outdated Dml-Md Bot.\n\n📌 *Commit:* ${latestCommit.commit.message}\n👤 *Author:* ${latestCommit.commit.author.name}\n🕒 *Date:* ${new Date(latestCommit.commit.author.date).toLocaleString()}\n\nTo update your worthless bot, tap the button below. if you're unable to tap the buttons type ${prefix}trigger Don't ask me how to tap`
                         },
                         footer: {
                             text: "> ©POWERED BY YOU"
