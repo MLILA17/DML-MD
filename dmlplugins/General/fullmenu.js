@@ -59,55 +59,66 @@ module.exports = {
 
     const username = m.pushName || "User";
 
-    let menuText = `╭─❒ 「 ${botname} Command Menu ⚠ 」\n`;
-    menuText += `│ ${getGreeting()}, @${username}\n`;
-    menuText += `│\n`;
-    menuText += `│ 🤖 *Bot*: ${botname}\n`;
-    menuText += `│ 📋 *Total Commands*: ${totalCommands || 0}\n`;
-    menuText += `│ 🕒 *Time*: ${getCurrentTimeInNairobi()}\n`;
-    menuText += `│ 🔣 *Prefix*: ${effectivePrefix || 'None'}\n`;
-    menuText += `│ 🌐 *Mode*: ${mode || 'Public'}\n`;
-    menuText += `│ 📚 *Library*: Baileys\n`;
-    menuText += `╰─────────────\n\n`;
+   let menuText = `
+╔══════════════════════════╗
+║ 🤖  ${botname} FULL COMMANDS
+╚══════════════════════════╝
 
-    menuText += `*COMMANDS REGISTRY ☑*\n\n`;
+👋 ${getGreeting()}, @${username}
 
-    for (const category of categories) {
-      let commandFiles = [];
+╭─── ❖ SYSTEM INFO ❖ ───╮
+│ 🤖 Bot      : ${botname}
+│ 📦 Commands : ${totalCommands || 0}
+│ 🕒 Time     : ${getCurrentTimeInNairobi()}
+│ 🔣 Prefix   : ${effectivePrefix || 'None'}
+│ 🌐 Mode     : ${mode || 'Public'}
+│ 📚 Library  : Baileys
+╰────────────────────────╯
 
-      const dirPath = path.join(__dirname, `../../dmlplugins/${category.name}`);
-      if (fs.existsSync(dirPath)) {
-        commandFiles = fs.readdirSync(dirPath)
-          .filter(file => file.endsWith('.js'));
-      }
+══════════════════════════
+📚 COMMAND REGISTRY
+══════════════════════════
 
-      // Skip empty categories except +18
-      if (commandFiles.length === 0 && category.name !== '+18') continue;
+`;
 
-      menuText += `╭─❒ 「 ${category.display} ${category.emoji} 」\n`;
+for (const category of categories) {
+  let commandFiles = [];
 
-      // Handle +18 manual commands only
-      if (category.name === '+18') {
-        const plus18Commands = ['xvideo'];
-        for (const cmd of plus18Commands) {
-          const fancyCommandName = toFancyFont(cmd);
-          menuText += `│ ✘ *${fancyCommandName}*\n`;
-        }
+  const dirPath = path.join(__dirname, `../../dmlplugins/${category.name}`);
+  if (fs.existsSync(dirPath)) {
+    commandFiles = fs.readdirSync(dirPath)
+      .filter(file => file.endsWith('.js'));
+  }
 
-        menuText += `╰─────────────\n\n`;
-        continue;
-      }
+  if (commandFiles.length === 0 && category.name !== '+18') continue;
 
-      for (const file of commandFiles) {
-        const commandName = file.replace('.js', '');
-        const fancyCommandName = toFancyFont(commandName);
-        menuText += `│ ✘ *${fancyCommandName}*\n`;
-      }
+  menuText += `
+╔═══ ${category.emoji} ${category.display} ═══╗
+`;
 
-      menuText += `╰─────────────\n\n`;
+  if (category.name === '+18') {
+    const plus18Commands = ['xvideo'];
+    for (const cmd of plus18Commands) {
+      const fancyCommandName = toFancyFont(cmd);
+      menuText += `║  🔞  ${fancyCommandName}\n`;
     }
+    menuText += `╚══════════════════════╝\n`;
+    continue;
+  }
 
-    menuText += `> Powered by Dml`;
+  for (const file of commandFiles) {
+    const commandName = file.replace('.js', '');
+    const fancyCommandName = toFancyFont(commandName);
+    menuText += `║  ✦  ${fancyCommandName}\n`;
+  }
+
+  menuText += `╚══════════════════════╝\n`;
+}
+
+menuText += `
+══════════════════════════
+© Powered by Dml
+`;
 
     await client.sendMessage(
       m.chat,
