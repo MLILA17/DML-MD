@@ -22,6 +22,7 @@ module.exports = {
   { name: 'Wa-Privacy', display: '『 𝙋𝙍𝙄𝙑𝘼𝘾𝙔 』', emoji: '🔐' },
   { name: 'Groups', display: '『 𝙂𝙍𝙊𝙐𝙋𝙎 』', emoji: '👥' },
   { name: 'AI', display: '『 𝘼𝙄 』', emoji: '🧠' },
+  { name: 'Search', display: '𝙎𝙚𝙖𝙧𝙘𝙝', emoji: '⤵️' },
   { name: 'Media', display: '『 𝙈𝙀𝘿𝙄𝘼 』', emoji: '🎬' },
   { name: 'Editting', display: '『 𝙀𝘿𝙄𝙏 』', emoji: '✂️' },
   { name: 'Logo', display: '『 𝙇𝙊𝙂𝙊 』', emoji: '🎨' },
