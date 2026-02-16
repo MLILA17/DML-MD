@@ -12,7 +12,7 @@ module.exports = {
 
       if (!q) {
         return m.reply(
-          "🎵 *YouTube Audio Downloader*\n\nUsage: play [song name or YouTube link]\n\nExample:\n• play calm down\n• play https://youtu.be/..."
+          "🎵 *YouTube Audio Downloader*\n\nUsage: play [song name or YouTube link]\n\nExample:\n• play calm down\n• play https://youtu.be/xxxx"
         );
       }
 
@@ -23,12 +23,11 @@ module.exports = {
       await m.reply(`🔍 Searching and processing: *${q}*...`);
 
       let videoUrl;
-      let videoTitle;
+      let videoTitle = "YouTube Audio";
       let videoThumbnail;
 
       // 🔗 If YouTube link
       if (/(youtube\.com|youtu\.be)/i.test(q)) {
-        videoUrl = q;
 
         const videoId = q.match(
           /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
@@ -38,32 +37,36 @@ module.exports = {
           return m.reply("❌ Invalid YouTube URL");
         }
 
-        videoTitle = "YouTube Audio";
+        videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
         videoThumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
       } else {
-        // 🔍 Search YouTube
+        // 🔍 Search YouTube (FIXED encodeURIComponent)
         const searchRes = await axios.get(
-          `https://api.sidycoders.xyz/api/ytdl?url=${encodeURIComponent()}`
+          `https://api.sidycoders.xyz/api/ytdl?url=${encodeURIComponent(q)}`,
+          { timeout: 20000 }
         );
 
         const videos = searchRes.data?.result;
+
         if (!Array.isArray(videos) || videos.length === 0) {
           return m.reply("❌ No videos found for your search");
         }
 
         const firstVideo = videos[0];
         videoUrl = firstVideo.url;
-        videoTitle = firstVideo.title;
+        videoTitle = firstVideo.title || "YouTube Audio";
         videoThumbnail = firstVideo.thumbnail;
       }
 
       // ⬇️ Download audio
       const downloadRes = await axios.get(
-        `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(videoUrl)}`
+        `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(videoUrl)}`,
+        { timeout: 30000 }
       );
 
       const downloadUrl = downloadRes.data?.result;
+
       if (!downloadUrl) {
         return m.reply("❌ Failed to get download URL");
       }
