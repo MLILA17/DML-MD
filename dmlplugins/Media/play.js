@@ -44,7 +44,7 @@ module.exports = {
       } else {
         // 🔍 Search YouTube
         const searchRes = await axios.get(
-          `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent()}`
+          `https://api.sidycoders.xyz/api/ytdl?url=${encodeURIComponent()}`
         );
 
         const videos = searchRes.data?.result;
