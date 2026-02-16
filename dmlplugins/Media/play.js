@@ -44,7 +44,7 @@ module.exports = {
       } else {
         // 🔍 Search YouTube
         const searchRes = await axios.get(
-          `https://apiskeith.vercel.app/search/yts?query=${encodeURIComponent(q)}`
+          `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent()}`
         );
 
         const videos = searchRes.data?.result;
@@ -60,7 +60,7 @@ module.exports = {
 
       // ⬇️ Download audio
       const downloadRes = await axios.get(
-        `https://apiskeith.vercel.app/download/audio?url=${encodeURIComponent(videoUrl)}`
+        `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(videoUrl)}`
       );
 
       const downloadUrl = downloadRes.data?.result;
