@@ -3,12 +3,12 @@ module.exports = async (context) => {
   const axios = require("axios");
 
   if (!text) {
-    return m.reply(`╭━━━〔 🔎 GOOGLE SEARCH 〕━━━╮
+    return m.reply(`╭━〔 🔎 GOOGLE SEARCH 〕━╮
 ┃ ❌ *Missing Search Term*
 ┃
 ┃ ➤ Example:
 ┃ .google What is treason
-╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+╰━━━━━━━━━━━━━━━━━━━╯`);
   }
 
   try {
@@ -17,23 +17,23 @@ module.exports = async (context) => {
     );
 
     if (!data.items || data.items.length === 0) {
-      return m.reply(`╭━━━〔 🔎 GOOGLE SEARCH 〕━━━╮
+      return m.reply(`╭━〔 🔎 GOOGLE SEARCH 〕━╮
 ┃ ❌ *No Results Found*
 ┃
 ┃ Try using different keywords.
-╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+╰━━━━━━━━━━━━━━━━━━━╯`);
     }
 
-    let msg = `╭━━━〔 🌐 GOOGLE SEARCH RESULT 〕━━━╮
+    let msg = `╭━〔 🌐 GOOGLE SEARCH RESULT 〕━╮
 ┃ 🔍 *Query:* ${text}
-╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+╰━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
     data.items.slice(0, 5).forEach((item, index) => {
       msg += `╭─〔 📌 Result ${index + 1} 〕
 ┃ 🏷️ *Title:* ${item.title}
 ┃ 📝 *Snippet:* ${item.snippet}
 ┃ 🔗 *Link:* ${item.link}
-╰─────────────────────╯\n\n`;
+╰─────────────────╯\n\n`;
     });
 
     msg += `✨ Powered by Dml`;
@@ -41,8 +41,8 @@ module.exports = async (context) => {
     m.reply(msg);
 
   } catch (e) {
-    m.reply(`╭━━━〔 ⚠️ SYSTEM ERROR 〕━━━╮
+    m.reply(`╭━〔 ⚠️ SYSTEM ERROR 〕━╮
 ┃ ❌ ${e.message}
-╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+╰━━━━━━━━━━━━━━━━━━━╯`);
   }
 };
