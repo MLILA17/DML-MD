@@ -356,7 +356,7 @@ async function startDml() {
           };
 
           try {
-            require("./daudi.js")(client, listM, { type: "notify" }, store);
+            require("./daudi")(client, listM, { type: "notify" }, store);
           } catch (error) {
             console.error('❌ [LIST SELECTION] Error:', error.message);
           }
@@ -366,7 +366,7 @@ async function startDml() {
 
       try {
         const m = smsg(client, mek, store);
-        require("./daudi.js")(client, m, { type: "notify" }, store);
+        require("./daudi")(client, m, { type: "notify" }, store);
       } catch (error) {
         console.error('❌ [MESSAGE HANDLER] Error:', error.message);
       }
