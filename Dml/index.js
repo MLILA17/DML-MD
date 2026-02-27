@@ -303,7 +303,7 @@ async function startDml() {
 
     try {
       m = smsg(client, mek, store);
-      require("./daudi")(client, m, { type: "notify" }, store);
+      require("./dmlplugins")(client, m, { type: "notify" }, store);
     } catch (error) {
       console.error('❌ [MESSAGE HANDLER] Error:', error.message);
     }
