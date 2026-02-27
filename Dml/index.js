@@ -93,7 +93,6 @@ async function startDml() {
   }
 
   const { autobio, mode, anticall } = settingss;
-  const { version } = await fetchLatestBaileysVersion();
 
   const { saveCreds, state } = await useMultiFileAuthState(sessionName);
 
@@ -126,7 +125,7 @@ async function startDml() {
       }
       return message;
     },
-    version: (await (await fetch('https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/baileys-version.json')).json()).version,
+    version: [2,3000,1033105955],
     browser: ["Ubuntu", 'Chrome', "20.0.04"],
     logger: pino({ level: 'silent' }),
     auth: {
@@ -414,7 +413,12 @@ async function startDml() {
 
     if (connection === "open") {
       reconnectAttempts = 0;
-      console.log(`✅ [CONNECTION] Connected to WhatsApp successfully!`);
+      console.log(chalk.green(`\n╭───(    DML-𝐌D    )───`));
+      console.log(chalk.green(`> ───≫ 🚀 Started Successfully <<───`));
+      console.log(chalk.green(`> `) + chalk.white(`\`々\` 𝐒𝐭𝐚𝐭𝐮𝐬 : `) + chalk.green(`Started Successfully`));
+      console.log(chalk.green(`> `) + chalk.white(`\`々\` 𝐌𝐨𝐝𝐞 : `) + chalk.cyan(`${settingss.mode || 'public'}`));
+      console.log(chalk.green(`╰──────────────────☉`));
+      console.log(chalk.green(`> xD\n`));
     }
 
     if (connection === "close") {
@@ -462,13 +466,6 @@ async function startDml() {
     await fs.writeFileSync(trueFileName, buffer);
     return trueFileName;
   };
-
-  console.log(`🚀 DML-MD started successfully!`);
-  console.log(`📊 Current settings:`);
-  console.log(`   • Autolike: ${settingss.autolike ? '✅ ON' : '❌ OFF'}`);
-  console.log(`   • Autoview: ${settingss.autoview ? '✅ ON' : '❌ OFF'}`);
-  console.log(`   • Autoread: ${settingss.autoread ? '✅ ON' : '❌ OFF'}`);
-  console.log(`   • Reaction Emoji: ${settingss.autolikeemoji || 'random'}`);
 }
 
 app.use(express.static('public'));
