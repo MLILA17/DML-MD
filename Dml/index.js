@@ -356,7 +356,7 @@ async function startDml() {
           };
 
           try {
-            require("./dmlplugins")(client, listM, { type: "notify" }, store);
+            require("../dmlplugins")(client, listM, { type: "notify" }, store);
           } catch (error) {
             console.error('❌ [LIST SELECTION] Error:', error.message);
           }
