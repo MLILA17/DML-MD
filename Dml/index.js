@@ -27,29 +27,29 @@ const app = express();
 const port = process.env.PORT || 10000;
 const _ = require("lodash");
 const PhoneNumber = require("awesome-phonenumber");
-const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('../lib/exif');
-const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('../lib/botFunctions');
+const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('../lib/exif.js');
+const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('../lib/botFunctions.js');
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
 const authenticationn = require('../Auth/auth.js');
-const { smsg } = require('../Handler/smsg');
-const { getSettings, getBannedUsers, banUser } = require("../Database/config");
+const { smsg } = require('../Handler/smsg.js');
+const { getSettings, getBannedUsers, banUser } = require("../Database/config.js");
 
-const { botname } = require('../Env/settings');
+const { botname } = require('../Env/settings.js');
 const { DateTime } = require('luxon');
-const { commands, totalCommands } = require('../Handler/commandHandler');
+const { commands, totalCommands } = require('../Handler/commandHandler.js');
 authenticationn();
 
 const path = require('path');
 
 const sessionName = path.join(__dirname, '..', 'Session');
 
-const groupEvents = require("../Handler/eventHandler");
-const groupEvents2 = require("../Handler/eventHandler");
-const connectionHandler = require('../Handler/connectionHandler');
-const antidelete = require('../Functions/antidelete');
-const antilink = require('../Functions/antilink');
-const antistatusmention = require('../Functions/antistatusmention');
+const groupEvents = require("../Handler/eventHandler.js");
+const groupEvents2 = require("../Handler/eventHandler.js");
+const connectionHandler = require('../Handler/connectionHandler.js');
+const antidelete = require('../Functions/antidelete.js');
+const antilink = require('../Functions/antilink.js');
+const antistatusmention = require('../Functions/antistatusmention.js');
 
 function cleanupSessionFiles() {
     try {
@@ -145,7 +145,7 @@ async function startDml() {
     setInterval(() => {
       const date = new Date();
       client.updateProfileStatus(
-        `${botname} 𝐢𝐬 𝐚𝐜𝐭𝐢𝐯𝐞 𝟐𝟒/𝟕\n\n${date.toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })} 𝐈𝐭'𝐬 𝐚 ${date.toLocaleString('en-US', { weekday: 'long', timeZone: 'Africa/Nairobi' })}.`
+        `${botname} 𝐢𝐬 𝐚𝐜𝐭𝐢𝐯𝐞 𝟐𝟒/𝟕 𝙒𝘼𝙏𝙐 𝙉𝙄 𝙈𝙏𝘼𝙅𝙄 𝙏𝙊𝙎𝙃𝘼\n\n${date.toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })} 𝐈𝐭'𝐬 𝐚 ${date.toLocaleString('en-US', { weekday: 'long', timeZone: 'Africa/Nairobi' })}.`
       );
     }, 10 * 1000);
   }
@@ -265,6 +265,11 @@ async function startDml() {
 
     mek.message = Object.keys(mek.message)[0] === "ephemeralMessage" ? mek.message.ephemeralMessage.message : mek.message;
 
+    if (!mek.message) {
+        console.error('❌ [MESSAGE HANDLER] mek.message is undefined');
+        return;
+    }
+
     await antilink(client, mek, store);
 
     if (autoread && remoteJid.endsWith('@s.whatsapp.net')) {
@@ -298,7 +303,7 @@ async function startDml() {
 
     try {
       m = smsg(client, mek, store);
-      require("./dmlplugins")(client, m, { type: "notify" }, store);
+      require("./daudi")(client, m, { type: "notify" }, store);
     } catch (error) {
       console.error('❌ [MESSAGE HANDLER] Error:', error.message);
     }
