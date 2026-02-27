@@ -1,3 +1,5 @@
+const fetch = require('node-fetch'); // ✅ Fixed by Dml
+
 module.exports = {
   name: 'play2',
   aliases: ['ply', 'p2', 'pl2'],
@@ -23,15 +25,27 @@ module.exports = {
 
       await client.sendMessage(m.chat, { react: { text: '⌛', key: m.key } });
 
-      const isYoutubeLink = /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/|playlist\?list=)?[a-zA-Z0-9_-]{11})/gi.test(query);
+      const isYoutubeLink =
+        /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/)?)([a-zA-Z0-9_-]{11})/i
+          .test(query);
 
       let audioUrl, filename, thumbnail, sourceUrl;
 
       if (isYoutubeLink) {
-        const response = await fetch(`https://api.sidycoders.xyz/api/ytdl?url=${encodeURIComponent(query)}&format=mp3&apikey=memberdycoders`);
-        const data = await response.json();
+        const response = await fetch(
+          `https://api.sidycoders.xyz/api/ytdl?url=${encodeURIComponent(query)}&format=mp3&apikey=memberdycoders`
+        );
 
-        if (!data.status || !data.cdn) {
+        const textData = await response.text();
+
+        let data;
+        try {
+          data = JSON.parse(textData);
+        } catch {
+          throw new Error("Invalid response from YouTube API");
+        }
+
+        if (!data?.status || !data?.cdn) {
           await client.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
           return m.reply(`╭━〔 ❌ DOWNLOAD FAILED 〕━⬣
 ┃ Unable to process that YouTube link.
@@ -47,10 +61,14 @@ module.exports = {
         }
 
         audioUrl = data.cdn;
-        filename = data.title || "Unknown YouTube Song";
-        thumbnail = "";
+        filename = (data.title || "Unknown YouTube Song")
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .trim();
+        thumbnail = data.thumbnail || "";
         sourceUrl = query;
+
       } else {
+
         if (query.length > 100) {
           return m.reply(`╭━〔 ⚠️ INPUT LIMIT 〕━⬣
 ┃ Song title exceeds limit.
@@ -61,10 +79,20 @@ module.exports = {
 > 🎧 DML-MD`);
         }
 
-        const response = await fetch(`https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
+        const response = await fetch(
+          `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(query)}`
+        );
 
-        if (!data.status || !data.result?.downloadUrl) {
+        const textData = await response.text();
+
+        let data;
+        try {
+          data = JSON.parse(textData);
+        } catch {
+          throw new Error("Invalid response from Search API");
+        }
+
+        if (!data?.status || !data?.result?.downloadUrl) {
           await client.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
           return m.reply(`╭━〔 🔎 NO RESULTS FOUND 〕━⬣
 ┃ No matching results for:
@@ -78,45 +106,63 @@ module.exports = {
         }
 
         audioUrl = data.result.downloadUrl;
-        filename = data.result.title || "Unknown Song";
+        filename = (data.result.title || "Unknown Song")
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .trim();
         thumbnail = data.result.thumbnail || "";
         sourceUrl = data.result.videoUrl || "";
       }
 
+      if (!audioUrl) throw new Error("Audio URL not found");
+
       await client.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
 
-      await client.sendMessage(m.chat, {
-        audio: { url: audioUrl },
-        mimetype: "audio/mpeg",
-        fileName: `${filename}.mp3`,
-        contextInfo: thumbnail ? {
-          externalAdReply: {
-            title: filename.substring(0, 30),
-            body: "DML-MD",
-            thumbnailUrl: thumbnail,
-            sourceUrl: sourceUrl,
-            mediaType: 1,
-            renderLargerThumbnail: true,
-          },
-        } : undefined,
-      }, { quoted: m });
+      await client.sendMessage(
+        m.chat,
+        {
+          audio: { url: audioUrl },
+          mimetype: "audio/mpeg",
+          fileName: `${filename}.mp3`,
+          contextInfo: thumbnail
+            ? {
+                externalAdReply: {
+                  title: filename.substring(0, 30),
+                  body: "DML-MD",
+                  thumbnailUrl: thumbnail,
+                  sourceUrl: sourceUrl,
+                  mediaType: 1,
+                  renderLargerThumbnail: true,
+                },
+              }
+            : undefined,
+        },
+        { quoted: m }
+      );
 
-      await client.sendMessage(m.chat, {
-        document: { url: audioUrl },
-        mimetype: "audio/mpeg",
-        fileName: `${filename.replace(/[<>:"/\\|?*]/g, '_')}.mp3`,
-        caption: `╭━〔 🎶 NOW PLAYING 〕━⬣
+      await client.sendMessage(
+        m.chat,
+        {
+          document: { url: audioUrl },
+          mimetype: "audio/mpeg",
+          fileName: `${filename}.mp3`,
+          caption: `╭━〔 🎶 NOW PLAYING 〕━⬣
 ┃ 🎧 ${filename}
 ┃ 
 ┃ ⬇️ Download completed successfully
 ┃ 📀 Format: MP3
 ╰━━━━━━━━━━━━━━━━━━⬣
-> ⚡ Powered by Dml`
-      }, { quoted: m });
+> ⚡ Powered by Dml`,
+        },
+        { quoted: m }
+      );
 
     } catch (error) {
       console.error('Play error:', error);
-      await client.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
+
+      await client.sendMessage(m.chat, {
+        react: { text: '❌', key: m.key },
+      });
+
       await m.reply(`╭━〔 🚨 PLAY ERROR 〕━⬣
 ┃ Something went wrong while processing.
 ┃ 
