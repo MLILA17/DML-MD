@@ -13,7 +13,7 @@
     "@hapi/boom": "^10.0.1",
     "@octokit/rest": "^22.0.0",
     "@vitalets/google-translate-api": "^9.2.0",
-    "@whiskeysockets/baileys": "github:DAUDY17/Dml-Baileys1.git",
+    "@whiskeysockets/baileys": "github:MLILA17/Dml-Baileys.git",
     "acrcloud": "^1.2.0",
     "async": "^3.2.5",
     "awesome-phonenumber": "^6.2.0",
