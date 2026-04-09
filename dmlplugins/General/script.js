@@ -43,7 +43,7 @@ module.exports = async (context) => {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
                                 display_text: '🔐 View Pair Code',
-                                url: 'https://dml-pairing-59op.onrender.com'
+                                url: 'https://dml-pairing-secure-site.onrender.com'
                             })
                         },
                         {
