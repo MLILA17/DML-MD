@@ -74,7 +74,7 @@ module.exports = async (context) => {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
                                 display_text: '📡 Follow Telegram Channel',
-                                url: 'https://t.me/dmltechTz'
+                                url: 'https://t.me/Dml_staff'
                             })
                         },
 
@@ -83,7 +83,7 @@ module.exports = async (context) => {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
                                 display_text: '👥 Join Telegram Group',
-                                url: 'https://t.me/Dml_Tech7'
+                                url: 'https://t.me/+7jPo9lc3PfYwYWE0'
                             })
                         },
 
