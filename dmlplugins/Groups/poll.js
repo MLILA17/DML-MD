@@ -31,7 +31,7 @@ ${FOOTER}`
 ┃ .poll Question | Option1 | Option2 | ...
 ┃
 ┃ ✅ Example:
-┃ .poll Best bot? | DML-MD | Other bots
+┃ .poll Best Artist ? | Daimond Platinum |(Harmonize) Kondeboy
 ┃
 ╰━━━━━━━━━━━━━━━━━━⬣
 ${FOOTER}`
