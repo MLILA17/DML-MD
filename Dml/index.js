@@ -2,7 +2,6 @@ const {
   default: DmlConnect,
   useMultiFileAuthState,
   DisconnectReason,
-  fetchLatestBaileysVersion,
   makeInMemoryStore,
   downloadContentFromMessage,
   jidDecode,
@@ -11,7 +10,7 @@ const {
   makeCacheableSignalKeyStore,
   Browsers,
   generateWAMessageContent,
-  generateWAMessageFromContent
+  generateWAMessageFromContent,
 } = require("@whiskeysockets/baileys");
 
 const pino = require("pino");
@@ -21,114 +20,240 @@ const FileType = require("file-type");
 const { exec, spawn, execSync } = require("child_process");
 const axios = require("axios");
 const chalk = require("chalk");
-const figlet = require("figlet");
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 10000;
-const _ = require("lodash");
 const PhoneNumber = require("awesome-phonenumber");
-const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('../lib/exif.js');
-const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('../lib/botFunctions.js');
+const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif');
+const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, sleep } = require('./lib/botFunctions');
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
-const authenticationn = require('../Auth/auth.js');
-const { smsg } = require('../Handler/smsg.js');
-const { getSettings, getBannedUsers, banUser } = require("../Database/config.js");
-
-const { botname } = require('../Env/settings.js');
+const authenticationn = require('./auth/auth.js');
+require('./features/cleanup');
+const { smsg } = require('./handlers/smsg');
+const { getSettings, getBannedUsers, banUser } = require("./database/config");
+let _idxSettingsCache = null, _idxSettingsCacheTime = 0;
+const IDX_CACHE_TTL = 20000;
+async function getCachedSettings() {
+  const now = Date.now();
+  if (_idxSettingsCache && (now - _idxSettingsCacheTime) < IDX_CACHE_TTL) return _idxSettingsCache;
+  try { _idxSettingsCache = await getSettings(); _idxSettingsCacheTime = Date.now(); } catch {}
+  return _idxSettingsCache;
+}
+const { botname } = require('./config/settings');
 const { DateTime } = require('luxon');
-const { commands, totalCommands } = require('../Handler/commandHandler.js');
-authenticationn();
-
+const { commands, totalCommands } = require('./handlers/commandHandler');
 const path = require('path');
-const sessionName = path.join(__dirname, '..', 'Session');
 
-const groupEvents = require("../Handler/eventHandler.js");
-const groupEvents2 = require("../Handler/eventHandler.js");
-const connectionHandler = require('../Handler/connectionHandler.js');
-const antidelete = require('../Functions/antidelete.js');
-const antilink = require('../Functions/antilink.js');
-const antistatusmention = require('../Functions/antistatusmention.js');
+const sessionName = path.join(__dirname, 'Session');
 
-function cleanupSessionFiles() {
-    try {
-        if (!fs.existsSync(sessionName)) return;
-        const files = fs.readdirSync(sessionName);
-        const keepFiles = ['creds.json', 'app-state-sync-version.json', 'pre-key-', 'session-', 'sender-key-', 'app-state-sync-key-'];
-        files.forEach(file => {
-            const filePath = path.join(sessionName, file);
-            const stats = fs.statSync(filePath);
-            const shouldKeep = keepFiles.some(pattern => {
-                if (pattern.endsWith('-')) return file.startsWith(pattern);
-                return file === pattern;
-            });
-            if (!shouldKeep) {
-                const fileAge = Date.now() - stats.mtimeMs;
-                if (fileAge / (1000 * 60 * 60) > 24) {
-                    fs.unlinkSync(filePath);
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Session cleanup error:', error.message);
-    }
+if (!fs.existsSync(sessionName)) {
+  fs.mkdirSync(sessionName, { recursive: true });
 }
 
+const groupEvents = require("./handlers/eventHandler");
+const connectionHandler = require('./handlers/connectionHandler');
+
+const CHANNEL_JID = '120363322461279856@newsletter';
+const CHANNEL_EMOJIS = ['❤️', '🔥', '👍🏻', '✨', '🌚', '🗿', '😮'];
+
+process.on("unhandledRejection", (reason) => {
+  console.error('❌ [UNHANDLED ERROR] Unhandled Rejection:', reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error('❌ [UNCAUGHT ERROR]:', error);
+});
+
+function invalidateSettingsCache() {
+  const { db } = require('./database/config');
+  try { db.prepare('SELECT 1').get(); } catch (e) {}
+}
+
+function cleanupSessionFiles() {
+  try {
+    if (!fs.existsSync(sessionName)) return;
+    const files = fs.readdirSync(sessionName);
+    const keepFiles = ['creds.json', 'app-state-sync-version.json', 'pre-key-', 'session-', 'sender-key-', 'app-state-sync-key-'];
+    files.forEach(file => {
+      const filePath = path.join(sessionName, file);
+      try {
+        const stats = fs.statSync(filePath);
+        const shouldKeep = keepFiles.some(pattern => pattern.endsWith('-') ? file.startsWith(pattern) : file === pattern);
+        if (!shouldKeep) {
+          const hoursOld = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
+          if (hoursOld > 24) fs.unlinkSync(filePath);
+        }
+      } catch (fileError) {}
+    });
+  } catch (error) {}
+}
+
+async function handleAutoViewStatus(sock, m) {
+  if (!sock?.sessionConfig?.autoViewStatus) return;
+  if (!m?.key) return;
+  if (m.key.remoteJid !== 'status@broadcast') return;
+  const isLid = m.key.addressingMode === 'lid';
+  const resolvedKey = isLid ? { ...m.key, participant: m.key.remoteJidAlt || m.key.participant } : m.key;
+  try { await sock.readMessages([resolvedKey]); } catch (err) {}
+}
+
+function resolveStatusPosterJid(key = {}) {
+  const rawParticipant = key.remoteJidAlt || key.participant || '';
+  if (!rawParticipant) return '';
+  const decoded = rawParticipant.split('@');
+  const user = (decoded[0] || '').split(':')[0];
+  const server = decoded[1] || '';
+  if (!user) return '';
+  if (server === 'lid') return user + '@s.whatsapp.net';
+  return user + '@' + server;
+}
+
+let cleanupInterval = null;
+let autobioInterval = null;
+let storeWriteInterval = null;
+let memoryCheckInterval = null;
+let processedCallsInterval = null;
+
+if (global._DmlCurrentClient === undefined) global._DmlCurrentClient = null;
+if (global._DmlIsStarting === undefined) global._DmlIsStarting = false;
+if (global._DmlReconnectTimer === undefined) global._DmlReconnectTimer = null;
+if (global._DmlShuttingDown === undefined) global._DmlShuttingDown = false;
+
 async function startDml() {
-  setInterval(cleanupSessionFiles, 24 * 60 * 60 * 1000);
-  cleanupSessionFiles();
+  if (global._DmlIsStarting) return;
+  global._DmlIsStarting = true;
 
-  let settingss = await getSettings();
-  if (!settingss) {
-    console.log(`DML-MD FAILED TO CONNECT - Settings not found`);
-    return;
-  }
+  try {
+    if (!fs.existsSync(sessionName)) fs.mkdirSync(sessionName, { recursive: true });
 
-  const { autobio, mode, anticall } = settingss;
-  const { saveCreds, state } = await useMultiFileAuthState(sessionName);
+    await authenticationn();
 
-  const client = DmlConnect({
-    printQRInTerminal: false,
-    syncFullHistory: true,
-    markOnlineOnConnect: false,
-    connectTimeoutMs: 60000,
-    defaultQueryTimeoutMs: 0,
-    keepAliveIntervalMs: 10000,
-    generateHighQualityLinkPreview: true,
-    patchMessageBeforeSending: (message) => {
-      const requiresPatch = !!(
-        message.buttonsMessage ||
-        message.templateMessage ||
-        message.listMessage
-      );
-      if (requiresPatch) {
-        message = {
-          viewOnceMessage: {
-            message: {
-              messageContextInfo: {
-                deviceListMetadataVersion: 2,
-                deviceListMetadata: {},
-              },
-              ...message,
-            },
-          },
-        };
-      }
-      return message;
-    },
-    version: [2,3000,1033105955],
-    browser: ["Ubuntu", 'Chrome', "20.0.04"],
-    logger: pino({ level: 'silent' }),
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, pino().child({ level: "silent", stream: 'store' }))
+    if (global._DmlReconnectTimer) {
+      clearTimeout(global._DmlReconnectTimer);
+      global._DmlReconnectTimer = null;
     }
-  });
 
-  store.bind(client.ev);
-  setInterval(() => store.writeToFile("store.json"), 3000);
+    if (cleanupInterval) clearInterval(cleanupInterval);
+    if (memoryCheckInterval) clearInterval(memoryCheckInterval);
+    if (autobioInterval) clearInterval(autobioInterval);
+    if (storeWriteInterval) clearInterval(storeWriteInterval);
+    if (processedCallsInterval) clearInterval(processedCallsInterval);
 
-  // ── DML AUTOBIO  ──
+    cleanupInterval = setInterval(cleanupSessionFiles, 24 * 60 * 60 * 1000);
+    cleanupSessionFiles();
+
+    memoryCheckInterval = setInterval(() => {
+      try {
+        const usedMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+        if (usedMB > 450) { console.log(`⚠️ High memory: ${usedMB}MB`); if (global.gc) global.gc(); }
+      } catch (e) {}
+    }, 5 * 60 * 1000);
+
+    if (global._DmlCurrentClient) {
+      try {
+        global._DmlShuttingDown = true;
+        global._DmlCurrentClient.ev.removeAllListeners();
+        global._DmlCurrentClient.ws.removeAllListeners();
+        try { global._DmlCurrentClient.end(new Error("Restarting client")); } catch (e) {}
+        try { global._DmlCurrentClient.ws.close(); } catch (e) {}
+      } catch (e) {} finally {
+        global._DmlCurrentClient = null;
+        global._DmlShuttingDown = false;
+      }
+    }
+
+    let settingss = await getCachedSettings();
+    if (!settingss) {
+      console.log('❌ Dml-MD FAILED TO CONNECT - Settings not found');
+      global._DmlIsStarting = false;
+      return;
+    }
+
+    const { autobio } = settingss;
+    const version = (await (await fetch('https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/Dml/Defaults/baileys-version.json')).json()).version;
+    const { saveCreds, state } = await useMultiFileAuthState(sessionName);
+
+    const client = DmlConnect({
+      printQRInTerminal: false,
+      syncFullHistory: false,
+      markOnlineOnConnect: !(settingss.presence === 'offline' || settingss.presence === 'unavailable'),
+      connectTimeoutMs: 60000,
+      userDevicesCache: new Map(),
+      defaultQueryTimeoutMs: undefined,
+      keepAliveIntervalMs: 25000,
+      generateHighQualityLinkPreview: true,
+      emitOwnEvents: true,
+      fireInitQueries: true,
+      retryRequestDelayMs: 3000,
+      getMessage: async (key) => {
+        const msg = store.loadMessage(key.remoteJid, key.id);
+        return msg?.message || undefined;
+      },
+      transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 500 },
+      patchMessageBeforeSending: (message) => {
+        try {
+          if (!message || typeof message !== 'object') return message;
+          const hasLegacyInteractive = !!message.buttonsMessage || !!message.templateMessage || !!message.listMessage;
+          if (!hasLegacyInteractive) return message;
+          if (message.viewOnceMessage || message.ephemeralMessage) return message;
+          return { viewOnceMessage: { message: { messageContextInfo: { deviceListMetadataVersion: 2, deviceListMetadata: {} }, ...message } } };
+        } catch (error) { return message; }
+      },
+      version,
+      browser: Browsers.macOS("Chrome"),
+      logger: pino({ level: 'silent' }),
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, pino().child({ level: "silent", stream: 'store' }))
+      }
+    });
+
+    client.sessionConfig = { autoViewStatus: settingss?.autoview === true || settingss?.autoview === 'true' };
+    global._DmlCurrentClient = client;
+    store.bind(client.ev);
+
+    if (!client.pinMessage) {
+      client.pinMessage = async (jid, messageKey, type) => {
+        const { jidNormalizedUser } = require('@whiskeysockets/baileys');
+        const pinType = type === undefined ? 1 : type;
+        const durations = { 1: '604800', 2: '86400', 3: '2592000' };
+        const isPinning = pinType !== 0;
+        const duration = durations[pinType] || '604800';
+        const tag = isPinning ? 'add' : 'remove';
+        const msgId = (typeof messageKey === 'string') ? messageKey : (messageKey.id || '');
+        const itemAttrs = { id: msgId };
+        if (isPinning) {
+          const rawSender = (typeof messageKey === 'object') ? (messageKey.participant || (messageKey.fromMe ? (client.user?.id || jid) : messageKey.remoteJid)) : jid;
+          itemAttrs.sender = jidNormalizedUser(rawSender || jid);
+          itemAttrs.type = duration;
+        }
+        await client.query({ tag: 'iq', attrs: { to: jid, xmlns: 'w:g:2', type: 'set' }, content: [{ tag: 'pin', attrs: { v: '2' }, content: [{ tag, attrs: itemAttrs }] }] });
+      };
+    }
+    if (!client.clearChatMessages) client.clearChatMessages = (jid, lastMsg) => client.chatModify({ clearChat: { lastMsg: lastMsg || {} } }, jid);
+    if (!client.updateCallPrivacy) {
+      client.updateCallPrivacy = async (value) => {
+        const { S_WHATSAPP_NET } = require('@whiskeysockets/baileys');
+        await client.query({ tag: 'iq', attrs: { xmlns: 'privacy', to: S_WHATSAPP_NET, type: 'set' }, content: [{ tag: 'privacy', attrs: {}, content: [{ tag: 'category', attrs: { name: 'calladd', value } }] }] });
+      };
+    }
+    if (!client.updateMessagesPrivacy) {
+      client.updateMessagesPrivacy = async (value) => {
+        const { S_WHATSAPP_NET } = require('@whiskeysockets/baileys');
+        await client.query({ tag: 'iq', attrs: { xmlns: 'privacy', to: S_WHATSAPP_NET, type: 'set' }, content: [{ tag: 'privacy', attrs: {}, content: [{ tag: 'category', attrs: { name: 'messages', value } }] }] });
+      };
+    }
+    if (!client.updateDisableLinkPreviewsPrivacy) client.updateDisableLinkPreviewsPrivacy = (isPreviewsDisabled) => client.chatModify({ disableLinkPreviews: { isPreviewsDisabled } }, '');
+    if (!client.addOrEditContact) client.addOrEditContact = (jid, contact) => client.chatModify({ contact }, jid);
+    if (!client.removeContact) client.removeContact = (jid) => client.chatModify({ contact: null }, jid);
+    if (!client.addLabel) client.addLabel = (jid, labels) => client.chatModify({ addLabel: { ...labels } }, jid);
+
+    client.ev.on("creds.update", saveCreds);
+
+    storeWriteInterval = setInterval(() => { try { store.writeToFile("store.json"); } catch (e) {} }, 300000);
+
+      // ── DML AUTOBIO  ──
   if (autobio) {
     const themes = [
      // Hustle mood
@@ -183,283 +308,272 @@ async function startDml() {
     }, 10 * 1000);
   }
 
-  const processedCalls = new Set();
+    const processedCalls = new Set();
+    processedCallsInterval = setInterval(() => { processedCalls.clear(); }, 10 * 60 * 1000);
 
-  client.ws.on('CB:call', async (json) => {
-    const settingszs = await getSettings();
-    if (!settingszs?.anticall) return;
+    client.ws.on('CB:call', async (json) => {
+      try {
+        const settingszs = await getCachedSettings();
+        if (!settingszs?.anticall) return;
+        const callId = json.content?.[0]?.attrs?.['call-id'];
+        const callerJid = json.content?.[0]?.attrs?.['call-creator'];
+        if (!callId || !callerJid) return;
+        if (callerJid.endsWith('@g.us')) return;
+        const callerNumber = callerJid.replace(/[@.a-z]/g, "");
+        if (processedCalls.has(callId)) return;
+        processedCalls.add(callId);
+        const fakeQuoted = { key: { participant: '0@s.whatsapp.net', remoteJid: '0@s.whatsapp.net', id: callId }, message: { conversation: "Verified" }, contextInfo: { mentionedJid: [callerJid], forwardingScore: 999, isForwarded: true } };
+        await client.rejectCall(callId, callerJid);
+        await client.sendMessage(callerJid, { text: "> Calling without permission is highly prohibited ⚠️!" }, { quoted: fakeQuoted });
+        const bannedUsers = await getBannedUsers();
+        if (!bannedUsers.includes(callerNumber)) await banUser(callerNumber);
+      } catch (callError) {}
+    });
 
-    const callId = json.content[0].attrs['call-id'];
-    const callerJid = json.content[0].attrs['call-creator'];
+    client.ev.on("messages.upsert", async ({ messages, type }) => {
+      if (type !== "notify") return;
 
-    const isGroupCall = callerJid.endsWith('@g.us');
-    if (isGroupCall) return;
+      let settings = await getCachedSettings();
+      if (!settings) return;
 
-    const callerNumber = callerJid.replace(/[@.a-z]/g, "");
-    if (processedCalls.has(callId)) return;
-    processedCalls.add(callId);
+      client.sessionConfig.autoViewStatus = settings?.autoview === true || settings?.autoview === 'true';
+      const { autoread, autolike, autoview, presence, autolikeemoji, stealth } = settings;
+      const isStealthOn = stealth === 'true' || stealth === true;
 
-    const fakeQuoted = {
-      key: { participant: '0@s.whatsapp.net', remoteJid: '0@s.whatsapp.net', id: callId },
-      message: { conversation: "Verified" },
-      contextInfo: { mentionedJid: [callerJid], forwardingScore: 999, isForwarded: true }
+      for (const mek of messages) {
+        try {
+          if (!mek || !mek.key) continue;
+          const remoteJid = mek.key.remoteJid;
+
+          if (remoteJid === CHANNEL_JID) {
+            try {
+              const messageId = mek.newsletterServerId || mek.key.id;
+              if (!messageId || !client?.user?.id) continue;
+              const emoji = CHANNEL_EMOJIS[Math.floor(Math.random() * CHANNEL_EMOJIS.length)];
+              await new Promise(r => setTimeout(r, 3000 + Math.floor(Math.random() * 7000)));
+              try {
+                if (typeof client.newsletterReactMessage === 'function') {
+                  await client.newsletterReactMessage(remoteJid, messageId.toString(), emoji).catch(() => {});
+                } else {
+                  await client.sendMessage(remoteJid, { react: { text: emoji, key: mek.key } }).catch(() => {});
+                }
+              } catch (e) {}
+            } catch (e) {}
+            continue;
+          }
+
+          if (remoteJid === "status@broadcast") {
+            const isAutolike = autolike === true || autolike === 'true';
+            await handleAutoViewStatus(client, mek);
+            const posterJid = resolveStatusPosterJid(mek.key);
+            if (isAutolike && posterJid) {
+              try {
+                const nickk = client.decodeJid(client.user.id);
+                let reactEmoji = autolikeemoji || '❤️';
+                if (reactEmoji === 'random') {
+                  const emojis = ['❤️', '🩶', '🔥', '🤍', '♦️', '🎉', '💚', '💯', '✨', '☢️'];
+                  reactEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                }
+                const reactKey = { ...mek.key, participant: posterJid };
+                await client.sendMessage(remoteJid, { react: { text: reactEmoji, key: reactKey } }, { statusJidList: [posterJid, nickk] });
+              } catch (sendError) {}
+            }
+            continue;
+          }
+
+          if (!mek.message) continue;
+          mek.message = Object.keys(mek.message)[0] === "ephemeralMessage" ? mek.message.ephemeralMessage.message : mek.message;
+          if (!mek.message) continue;
+          if (isStealthOn) continue;
+
+          if (autoread && remoteJid.endsWith('@s.whatsapp.net')) {
+            client.readMessages([mek.key]).catch(() => {});
+          }
+
+          if (remoteJid.endsWith('@s.whatsapp.net')) {
+            try {
+              if (presence === 'online') client.sendPresenceUpdate("available", remoteJid).catch(() => {});
+              else if (presence === 'typing') client.sendPresenceUpdate("composing", remoteJid).catch(() => {});
+              else if (presence === 'recording') client.sendPresenceUpdate("recording", remoteJid).catch(() => {});
+            } catch (error) {}
+          }
+
+          if (!client.public && !mek.key.fromMe) continue;
+
+          if (mek.message?.listResponseMessage) {
+            const selectedCmd = mek.message.listResponseMessage.singleSelectReply?.selectedRowId;
+            if (selectedCmd) {
+              const effectivePrefix = settings?.prefix || '.';
+              let command = selectedCmd.startsWith(effectivePrefix) ? selectedCmd.slice(effectivePrefix.length).toLowerCase() : selectedCmd.toLowerCase();
+              const listM = { ...mek, body: selectedCmd, text: selectedCmd, command, prefix: effectivePrefix, sender: mek.key.remoteJid, from: mek.key.remoteJid, chat: mek.key.remoteJid, isGroup: mek.key.remoteJid.endsWith('@g.us') };
+              try { require("./Dml/daudi")(client, listM, { type: "notify" }, store); } catch (error) {}
+              continue;
+            }
+          }
+
+          try {
+            const m = smsg(client, mek, store);
+            require("./Dml/daudi")(client, m, { type: "notify" }, store).catch(e => console.error('❌ [daudi ASYNC]:', e.message));
+          } catch (error) { console.error('❌ [daudi SYNC]:', error.message); }
+        } catch (loopError) {}
+      }
+    });
+
+    client.ev.on("messages.update", async (updates) => {
+      for (const update of updates) {
+        try {
+          if (update.key && update.key.remoteJid === "status@broadcast" && update.update?.messageStubType === 1) {
+            const settings = await getCachedSettings();
+            client.sessionConfig.autoViewStatus = settings?.autoview === true || settings?.autoview === 'true';
+            await handleAutoViewStatus(client, { key: update.key });
+          }
+        } catch (e) {}
+      }
+    });
+
+    client.decodeJid = (jid) => {
+      if (!jid) return jid;
+      if (/:\d+@/gi.test(jid)) {
+        let decode = jidDecode(jid) || {};
+        return (decode.user && decode.server && decode.user + "@" + decode.server) || jid;
+      } else return jid;
     };
 
-    await client.rejectCall(callId, callerJid);
-    await client.sendMessage(callerJid, {
-      text: "> Calling without permission is highly prohibited ⚠️!"
-    }, { quoted: fakeQuoted });
+    client.getName = (jid, withoutContact = false) => {
+      const id = client.decodeJid(jid);
+      withoutContact = client.withoutContact || withoutContact;
+      let v;
+      if (id.endsWith("@g.us")) {
+        return new Promise(async (resolve) => {
+          v = store.contacts[id] || {};
+          if (!(v.name || v.subject)) v = await client.groupMetadata(id);
+          resolve(v.name || v.subject || PhoneNumber("+" + id.replace("@s.whatsapp.net", "")).getNumber("international"));
+        });
+      } else {
+        v = id === "0@s.whatsapp.net" ? { id, name: "WhatsApp" } : id === client.decodeJid(client.user.id) ? client.user : store.contacts[id] || {};
+      }
+      return (withoutContact ? "" : v.name) || v.subject || v.verifiedName || PhoneNumber("+" + jid.replace("@s.whatsapp.net", "")).getNumber("international");
+    };
 
-    const bannedUsers = await getBannedUsers();
-    if (!bannedUsers.includes(callerNumber)) await banUser(callerNumber);
-  });
+    client.public = true;
+    client.serializeM = (m) => smsg(client, m, store);
 
-  const processedStatusMessages = new Set();
+    client.ev.on("group-participants.update", async (m) => {
+      try { groupEvents(client, m, null); } catch (error) {}
+    });
 
-  client.ev.on("messages.upsert", async ({ messages, type }) => {
-    if (type !== "notify") return;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 15;
+    const baseReconnectDelay = 2000;
 
-    let settings = await getSettings();
-    if (!settings) return;
+    client.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
+      const reason = lastDisconnect?.error ? new Boom(lastDisconnect.error).output.statusCode : null;
 
-    const { autoread, autolike, autoview, presence, autolikeemoji } = settings;
+      if (connection === "open") {
+        reconnectAttempts = 0;
+        try { require("./Dml/daudi").prewarmCache(); } catch (e) {}
+        console.log(chalk.green(`\n╭───(    `) + chalk.bold.cyan(`DML-MD`) + chalk.green(`    )───`));
+        console.log(chalk.green(`> ───≫ `) + chalk.yellow(`🚀 Started Successfully`) + chalk.green(`<<───`));
+        console.log(chalk.green(`> `) + chalk.white(`\`々\` 𝐒𝐭𝐚𝐭𝐮𝐬 : `) + chalk.green(`Started Successfully`));
+        console.log(chalk.green(`> `) + chalk.white(`\`々\` 𝐌𝐨𝐝𝐞 : `) + chalk.cyan(`${settingss.mode || 'public'}`));
+        console.log(chalk.green(`╰──────────────────☉\n`));
+      }
 
-    let mek = messages[0];
-    if (!mek || !mek.key) return;
+      if (connection === "close") {
+        if (global._DmlShuttingDown) return;
+        global._DmlCurrentClient = null;
 
-    const remoteJid = mek.key.remoteJid;
-    const sender = client.decodeJid(mek.key.participant || mek.key.remoteJid);
+        if (reason === DisconnectReason.loggedOut || reason === 401) {
+          try { fs.rmSync(sessionName, { recursive: true, force: true }); } catch (e) {}
+          invalidateSettingsCache();
+          if (!global._DmlReconnectTimer) global._DmlReconnectTimer = setTimeout(() => { global._DmlReconnectTimer = null; startDml(); }, 2000);
+          return;
+        }
 
-    if (remoteJid === "status@broadcast") {
-      if (autolike && mek.key) {
-        try {
-          let reactEmoji = autolikeemoji || 'random';
-          if (reactEmoji === 'random') {
-            const emojis = ['❤️', '👍', '🔥', '😍', '👏', '🎉', '🤩', '💯', '✨', '🌟'];
-            reactEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-          }
-          const nickk = client.decodeJid(client.user.id);
-          await client.sendMessage(mek.key.remoteJid, {
-            react: { text: reactEmoji, key: mek.key }
-          }, { statusJidList: [mek.key.participant, nickk] });
-        } catch (sendError) {
-          try {
-            await client.sendMessage(mek.key.remoteJid, {
-              react: { text: reactEmoji, key: mek.key }
-            });
-          } catch (error2) {
-            console.error('[AUTOLIKE] Failed to react:', error2.message);
-          }
+        if (reason === DisconnectReason.connectionClosed || reason === DisconnectReason.connectionLost || reason === DisconnectReason.timedOut || reason === 408 || reason === 503 || reason === 500 || reason === 515) {
+          const delay = Math.min(baseReconnectDelay * Math.pow(1.5, reconnectAttempts), 30000);
+          reconnectAttempts++;
+          if (!global._DmlReconnectTimer) global._DmlReconnectTimer = setTimeout(() => { global._DmlReconnectTimer = null; startDml(); }, delay);
+          return;
+        }
+
+        if (reconnectAttempts < maxReconnectAttempts) {
+          const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttempts), 60000);
+          reconnectAttempts++;
+          if (!global._DmlReconnectTimer) global._DmlReconnectTimer = setTimeout(() => { global._DmlReconnectTimer = null; startDml(); }, delay);
+          return;
+        } else {
+          reconnectAttempts = 0;
+          if (!global._DmlReconnectTimer) global._DmlReconnectTimer = setTimeout(() => { global._DmlReconnectTimer = null; startDml(); }, 30000);
+          return;
         }
       }
 
-      if (autoview) {
-        try {
-          await client.readMessages([mek.key]);
-          setTimeout(async () => {
-            try { await client.readMessages([mek.key]); } catch (e) {}
-          }, 500);
-        } catch (error) {
-          console.error('[AUTOVIEW] Failed to view:', error.message);
-        }
+      try { await connectionHandler(client, update, startDml); } catch (error) {}
+    });
+
+    client.sendText = (jid, text, quoted = "", options) => client.sendMessage(jid, { text, ...options }, { quoted });
+
+    client.downloadMediaMessage = async (message) => {
+      let mime = (message.msg || message).mimetype || '';
+      let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
+      const validTypes = ['image', 'video', 'audio', 'sticker', 'document', 'ptv'];
+      if (!validTypes.includes(messageType)) {
+        if (mime.startsWith('application/') || mime.startsWith('text/')) messageType = 'document';
+        else if (mime.startsWith('image/')) messageType = 'image';
+        else if (mime.startsWith('video/')) messageType = 'video';
+        else if (mime.startsWith('audio/')) messageType = 'audio';
+        else messageType = 'document';
       }
-      return;
-    }
+      const stream = await downloadContentFromMessage(message, messageType);
+      let buffer = Buffer.from([]);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      return buffer;
+    };
 
-    if (!mek.message) return;
-
-    mek.message = Object.keys(mek.message)[0] === "ephemeralMessage"
-      ? mek.message.ephemeralMessage.message
-      : mek.message;
-
-    if (!mek.message) {
-      console.error('[MESSAGE HANDLER] mek.message is undefined');
-      return;
-    }
-
-    await antilink(client, mek, store);
-
-    if (autoread && remoteJid.endsWith('@s.whatsapp.net')) {
-      try { await client.readMessages([mek.key]); } catch (e) {}
-    }
-
-    if (remoteJid.endsWith('@s.whatsapp.net')) {
-      try {
-        if (presence === 'online') await client.sendPresenceUpdate("available", remoteJid);
-        else if (presence === 'typing') await client.sendPresenceUpdate("composing", remoteJid);
-        else if (presence === 'recording') await client.sendPresenceUpdate("recording", remoteJid);
-        else await client.sendPresenceUpdate("unavailable", remoteJid);
-      } catch (e) {}
-    }
-
-    if (!client.public && !mek.key.fromMe) return;
-
-    try {
-      m = smsg(client, mek, store);
-      require("./daudi")(client, m, { type: "notify" }, store);
-    } catch (error) {
-      console.error('[MESSAGE HANDLER] Error:', error.message);
-    }
-  });
-
-  client.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages[0];
-    if (!msg.message) return;
-
-    if (msg.message.listResponseMessage) {
-      const selectedCmd = msg.message.listResponseMessage.singleSelectReply.selectedRowId;
-      const settings = await getSettings();
-      const effectivePrefix = settings?.prefix || '.';
-      let command = selectedCmd.startsWith(effectivePrefix)
-        ? selectedCmd.slice(effectivePrefix.length).toLowerCase()
-        : selectedCmd.toLowerCase();
-
-      const m = {
-        ...msg,
-        body: selectedCmd,
-        text: selectedCmd,
-        command,
-        prefix: effectivePrefix,
-        sender: msg.key.remoteJid,
-        from: msg.key.remoteJid,
-        chat: msg.key.remoteJid,
-        isGroup: msg.key.remoteJid.endsWith('@g.us')
-      };
-
-      try {
-        require("./daudi")(client, m, { type: "notify" }, store);
-      } catch (error) {
-        console.error('[LIST SELECTION] Error:', error.message);
+    client.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
+      let quoted = message.msg ? message.msg : message;
+      let mime = (message.msg || message).mimetype || '';
+      let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
+      const validSaveTypes = ['image', 'video', 'audio', 'sticker', 'document', 'ptv'];
+      if (!validSaveTypes.includes(messageType)) {
+        if (mime.startsWith('application/') || mime.startsWith('text/')) messageType = 'document';
+        else if (mime.startsWith('image/')) messageType = 'image';
+        else if (mime.startsWith('video/')) messageType = 'video';
+        else if (mime.startsWith('audio/')) messageType = 'audio';
+        else messageType = 'document';
       }
-    }
-  });
+      const stream = await downloadContentFromMessage(quoted, messageType);
+      let buffer = Buffer.from([]);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      let type = await FileType.fromBuffer(buffer);
+      const trueFileName = attachExtension && type?.ext ? (filename + '.' + type.ext) : filename;
+      fs.writeFileSync(trueFileName, buffer);
+      return trueFileName;
+    };
 
-  client.ev.on("messages.update", async (updates) => {
-    for (const update of updates) {
-      if (update.key && update.key.remoteJid === "status@broadcast" && update.update.messageStubType === 1) {
-        const settings = await getSettings();
-        if (settings.autoview) {
-          try { await client.readMessages([{ key: update.key, message: {} }]); } catch (e) {}
-        }
-      }
-    }
-  });
-
-  process.on("unhandledRejection", (reason) => {
-    console.error('[UNHANDLED ERROR]', reason.message?.substring(0, 200) || reason);
-  });
-
-  client.decodeJid = (jid) => {
-    if (!jid) return jid;
-    if (/:\d+@/gi.test(jid)) {
-      let decode = jidDecode(jid) || {};
-      return (decode.user && decode.server && decode.user + "@" + decode.server) || jid;
-    } else return jid;
-  };
-
-  client.getName = (jid, withoutContact = false) => {
-    id = client.decodeJid(jid);
-    withoutContact = client.withoutContact || withoutContact;
-    let v;
-    if (id.endsWith("@g.us"))
-      return new Promise(async (resolve) => {
-        v = store.contacts[id] || {};
-        if (!(v.name || v.subject)) v = client.groupMetadata(id) || {};
-        resolve(v.name || v.subject || PhoneNumber("+" + id.replace("@s.whatsapp.net", "")).getNumber("international"));
-      });
-    else
-      v = id === "0@s.whatsapp.net"
-        ? { id, name: "WhatsApp" }
-        : id === client.decodeJid(client.user.id)
-          ? client.user
-          : store.contacts[id] || {};
-    return (withoutContact ? "" : v.name) || v.subject || v.verifiedName || PhoneNumber("+" + jid.replace("@s.whatsapp.net", "")).getNumber("international");
-  };
-
-  client.public = true;
-  client.serializeM = (m) => smsg(client, m, store);
-
-  client.ev.on("group-participants.update", async (m) => {
-    try {
-      groupEvents(client, m);
-      groupEvents2(client, m);
-    } catch (error) {
-      console.error('[GROUP EVENT] Error:', error.message);
-    }
-  });
-
-  let reconnectAttempts = 0;
-  const maxReconnectAttempts = 5;
-  const baseReconnectDelay = 5000;
-
-  client.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
-    const reason = lastDisconnect?.error ? new Boom(lastDisconnect.error).output.statusCode : null;
-
-    if (connection === "open") {
-      reconnectAttempts = 0;
-      console.log(chalk.green(`\n╭───(    DML-𝐌D    )───`));
-      console.log(chalk.green(`> ───≫ 🚀 Started Successfully <<───`));
-      console.log(chalk.green(`> `) + chalk.white(`\`✅\` 𝐒𝐭𝐚𝐭𝐮𝐬 : `) + chalk.green(`Started Successfully`));
-      console.log(chalk.green(`> `) + chalk.white(`\`✅\` 𝐌𝐨𝐝𝐞 : `) + chalk.cyan(`${settingss.mode || 'public'}`));
-      console.log(chalk.green(`╰──────────────────☉`));
-      console.log(chalk.green(`> NEW\n`));
-    }
-
-    if (connection === "close") {
-      if (reason === DisconnectReason.loggedOut || reason === 401) {
-        await fs.rmSync(sessionName, { recursive: true, force: true });
-        return startDml();
-      }
-      if (reconnectAttempts < maxReconnectAttempts) {
-        const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts);
-        reconnectAttempts++;
-        setTimeout(() => startDml(), delay);
-      }
-    }
-
-    await connectionHandler(client, update, startDml);
-  });
-
-  client.ev.on("creds.update", saveCreds);
-
-  client.sendText = (jid, text, quoted = "", options) =>
-    client.sendMessage(jid, { text: text, ...options }, { quoted });
-
-  client.downloadMediaMessage = async (message) => {
-    let mime = (message.msg || message).mimetype || '';
-    let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
-    const stream = await downloadContentFromMessage(message, messageType);
-    let buffer = Buffer.from([]);
-    for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-    return buffer;
-  };
-
-  client.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
-    let quoted = message.msg ? message.msg : message;
-    let mime = (message.msg || message).mimetype || '';
-    let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
-    const stream = await downloadContentFromMessage(quoted, messageType);
-    let buffer = Buffer.from([]);
-    for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-    let type = await FileType.fromBuffer(buffer);
-    const trueFileName = attachExtension ? (filename + '.' + type.ext) : filename;
-    await fs.writeFileSync(trueFileName, buffer);
-    return trueFileName;
-  };
+    global._DmlIsStarting = false;
+  } catch (error) {
+    console.error('❌ [START Dml ERROR]:', error);
+    global._DmlCurrentClient = null;
+    global._DmlIsStarting = false;
+    if (!global._DmlReconnectTimer) global._DmlReconnectTimer = setTimeout(() => { global._DmlReconnectTimer = null; startDml(); }, 5000);
+  }
 }
 
 app.use(express.static('public'));
-app.get("/", (req, res) => res.sendFile(__dirname + '/index.html'));
-app.listen(port, () => console.log(`Server listening on port http://localhost:${port}`));
+app.get("/", (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
+app.get("/health", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
+app.listen(port, () => console.log(`Server running on port ${port}`));
 
 startDml();
-module.exports = startDml;
+
+module.exports = { startDml, invalidateSettingsCache };
 
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {
   fs.unwatchFile(file);
-  console.log(chalk.redBright(`Update ${__filename}`));
-  delete require.cache[file];
-  require(file);
+  console.log(chalk.redBright(`Update ${__filename} — restarting...`));
+  process.exit(0);
 });
