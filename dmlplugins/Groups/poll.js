@@ -23,22 +23,22 @@ ${FOOTER}`
 
         const input = (context.text || context.q || '').trim();
 
-        if (!input.includes('|')) {
+        if (!input.includes(',')) {
             return m.reply(
                 `╭━━〔 *DML-MD • POLL FORMAT* 〕━━⬣
 ┃
 ┃ 📝 Format:
-┃ .poll Question | Option1 | Option2 | ...
+┃ .poll Question, Option1, Option2, ...
 ┃
 ┃ ✅ Example:
-┃ .poll Best Artist ? | Daimond Platinum |(Harmonize) Kondeboy
+┃ .poll Who is the best artist in Tanzania?, Diamond Platnumz, Ali kiba, Other bots
 ┃
 ╰━━━━━━━━━━━━━━━━━━⬣
 ${FOOTER}`
             );
         }
 
-        const parts = input.split('|').map(s => s.trim()).filter(Boolean);
+        const parts = input.split(',').map(s => s.trim()).filter(Boolean);
 
         if (parts.length < 3) {
             return m.reply(
