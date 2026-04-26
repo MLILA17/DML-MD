@@ -53,7 +53,7 @@
 ### 🔹 Step 2: Generate Session ID
 🔐 Pair your WhatsApp device using the server below
 
-<a href="https://dml-pairing-zm8r.onrender.com">
+<a href="https://pair-dml.vercel.app">
   <img src="https://img.shields.io/badge/PAIR_DEVICE_SERVER-8A2BE2?style=for-the-badge&logo=whatsapp&logoColor=white">
 </a>
 
