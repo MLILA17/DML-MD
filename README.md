@@ -109,7 +109,13 @@
 
 <p align="center">
   <a href="https://github.com/MLILA17/DML-MD/network/members">
-    <img src="https://reporoster.com/forks/MLILA17/DML-MD" alt="Forkers Leaderboard" />
+    <img src="https://img.shields.io/github/forks/MLILA17/DML-MD?label=Total%20Forks&style=for-the-badge&logo=github&color=32CD32" alt="Total Forks" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/MLILA17/DML-MD/network/members" target="_blank">
+    <img src="https://img.shields.io/badge/View_Top_Forkers-Live_List-24292E?style=for-the-badge&logo=github&logoColor=white" alt="View Top Forkers" />
   </a>
 </p>
 
@@ -134,7 +140,9 @@
 </p>
 
 <p align="center">
-  <img src="https://reporoster.com/followers/MLILA17" alt="GitHub Followers" />
+  <a href="https://github.com/MLILA17?tab=followers" target="_blank">
+    <img src="https://github-readme-stats.vercel.app/api?username=MLILA17&show_icons=true&hide_title=true&hide=issues,contribs,prs&count_private=true&include_all_commits=true" alt="GitHub Followers Overview" />
+  </a>
 </p>
 
 ---
