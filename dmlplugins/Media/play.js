@@ -1,10 +1,105 @@
 const fetch = require('node-fetch');
 const yts = require('yt-search');
 
+function isYoutubeUrl(input = '') {
+  return /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/)?)([a-zA-Z0-9_-]{11})/i.test(input);
+}
+
+function getVideoId(input = '') {
+  const match = input.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|v\/)?([a-zA-Z0-9_-]{11})/i);
+  return match ? match[1] : null;
+}
+
+function safeFileName(name = 'Unknown YouTube Song') {
+  return String(name)
+    .replace(/[<>:"/\\|?*]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80) || 'Unknown YouTube Song';
+}
+
+function findTitle(data) {
+  if (!data || typeof data !== 'object') return null;
+
+  const keys = ['title', 'name', 'filename', 'fileName', 'videoTitle', 'song'];
+
+  for (const key of keys) {
+    if (typeof data[key] === 'string' && data[key].trim()) {
+      return data[key].trim();
+    }
+  }
+
+  for (const value of Object.values(data)) {
+    if (value && typeof value === 'object') {
+      const found = findTitle(value);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
+function collectUrls(data, urls = [], path = '') {
+  if (!data) return urls;
+
+  if (typeof data === 'string') {
+    if (/^https?:\/\//i.test(data)) {
+      urls.push({ url: data, path: path.toLowerCase() });
+    }
+    return urls;
+  }
+
+  if (Array.isArray(data)) {
+    data.forEach((item, index) => collectUrls(item, urls, `${path}.${index}`));
+    return urls;
+  }
+
+  if (typeof data === 'object') {
+    for (const [key, value] of Object.entries(data)) {
+      collectUrls(value, urls, path ? `${path}.${key}` : key);
+    }
+  }
+
+  return urls;
+}
+
+function pickBestAudioUrl(data) {
+  const urls = collectUrls(data);
+
+  if (!urls.length) return null;
+
+  const blocked = ['jpg', 'jpeg', 'png', 'webp', 'thumbnail', 'thumb', 'image', 'avatar'];
+
+  const filtered = urls.filter(item => {
+    const raw = `${item.path} ${item.url}`.toLowerCase();
+    return !blocked.some(word => raw.includes(word));
+  });
+
+  const scored = filtered.map(item => {
+    const raw = `${item.path} ${item.url}`.toLowerCase();
+    let score = 0;
+
+    if (raw.includes('audio')) score += 50;
+    if (raw.includes('mp3')) score += 50;
+    if (raw.includes('m4a')) score += 40;
+    if (raw.includes('download')) score += 35;
+    if (raw.includes('dl')) score += 25;
+    if (raw.includes('url')) score += 15;
+    if (raw.includes('link')) score += 10;
+
+    return { ...item, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  return scored[0]?.url || null;
+}
+
 module.exports = {
   name: 'play',
   aliases: ['ply', 'p', 'ppl'],
   description: 'Searches a song on YouTube and downloads it as MP3',
+
   run: async (context) => {
     const { client, m, text } = context;
 
@@ -18,8 +113,8 @@ module.exports = {
 ┃ ➤ Send a song name or YouTube link.
 ┃
 ┃ ✦ Example:
-┃   .play2 komasava
-┃   .play2 https://youtu.be/dQw4w9WgXcQ
+┃   .play komasava
+┃   .play https://youtu.be/dQw4w9WgXcQ
 ╰━━━━━━━━━━━━━━━━━━⬣
 > 🚀 Powered by Dml Tech`);
       }
@@ -28,8 +123,7 @@ module.exports = {
         react: { text: '⌛', key: m.key }
       });
 
-      const isYoutubeLink =
-        /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/)?)([a-zA-Z0-9_-]{11})/i.test(query);
+      const isYoutubeLink = isYoutubeUrl(query);
 
       let videoUrl = query;
       let title = 'Unknown YouTube Song';
@@ -56,50 +150,65 @@ module.exports = {
         }
 
         const video = search.videos[0];
+
         videoUrl = video.url;
         title = video.title || title;
         thumbnail = video.thumbnail || '';
         duration = video.timestamp || '';
       } else {
-        const search = await yts({ videoId: query.match(/([a-zA-Z0-9_-]{11})/i)?.[1] });
+        const videoId = getVideoId(query);
 
-        if (search) {
-          title = search.title || title;
-          thumbnail = search.thumbnail || '';
-          duration = search.timestamp || '';
-          videoUrl = search.url || query;
+        if (videoId) {
+          const search = await yts({ videoId });
+
+          if (search) {
+            title = search.title || title;
+            thumbnail = search.thumbnail || '';
+            duration = search.timestamp || '';
+            videoUrl = search.url || query;
+          }
         }
       }
 
-      const apiUrl = `https://api.nexray.web.id/downloader/ytplay?q=${encodeURIComponent(videoUrl)}&quality=128`;
+      const apiUrl = `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(videoUrl)}`;
 
       const response = await fetch(apiUrl);
       const textData = await response.text();
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
       let data;
+
       try {
         data = JSON.parse(textData);
       } catch {
-        throw new Error('Invalid response from the API');
+        throw new Error('Invalid JSON response from the API');
       }
 
-      const result = data.result || data.results || data;
+      const result = data.result || data.results || data.data || data;
 
       const audioUrl =
         result.download_url ||
         result.downloadUrl ||
-        result.url ||
+        result.download ||
+        result.dlink ||
+        result.dl_link ||
+        result.mp3 ||
         result.audio ||
-        result.link;
+        result.url ||
+        result.link ||
+        pickBestAudioUrl(result);
 
       title =
-        result.title ||
-        result.name ||
+        findTitle(result) ||
         title ||
         'Unknown YouTube Song';
 
       thumbnail =
         result.thumbnail ||
+        result.thumb ||
         result.image ||
         thumbnail ||
         '';
@@ -122,7 +231,7 @@ module.exports = {
 > 🎵 DmlDownloader`);
       }
 
-      const safeTitle = title.replace(/[<>:"/\\|?*]/g, '_').trim();
+      const safeTitle = safeFileName(title);
 
       await client.sendMessage(m.chat, {
         react: { text: '✅', key: m.key }
@@ -169,7 +278,7 @@ module.exports = {
       );
 
     } catch (error) {
-      console.error('Play2 error:', error);
+      console.error('Play error:', error);
 
       await client.sendMessage(m.chat, {
         react: { text: '❌', key: m.key }
