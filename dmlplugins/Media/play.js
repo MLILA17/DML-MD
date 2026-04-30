@@ -1,5 +1,39 @@
-const fetch = require('node-fetch');
 const yts = require('yt-search');
+
+const API_URL = 'https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=';
+
+async function fetchJson(url, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json,text/plain,*/*'
+      },
+      signal: controller.signal
+    });
+
+    const raw = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error(`API returned invalid JSON: ${raw.slice(0, 100)}`);
+    }
+
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.status}`);
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function isYoutubeUrl(input = '') {
   return /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/)?)([a-zA-Z0-9_-]{11})/i.test(input);
@@ -18,12 +52,20 @@ function safeFileName(name = 'Unknown YouTube Song') {
     .slice(0, 80) || 'Unknown YouTube Song';
 }
 
-function findTitle(data) {
+function deepFindTitle(data) {
   if (!data || typeof data !== 'object') return null;
 
-  const keys = ['title', 'name', 'filename', 'fileName', 'videoTitle', 'song'];
+  const titleKeys = [
+    'title',
+    'name',
+    'filename',
+    'fileName',
+    'videoTitle',
+    'song',
+    'track'
+  ];
 
-  for (const key of keys) {
+  for (const key of titleKeys) {
     if (typeof data[key] === 'string' && data[key].trim()) {
       return data[key].trim();
     }
@@ -31,7 +73,7 @@ function findTitle(data) {
 
   for (const value of Object.values(data)) {
     if (value && typeof value === 'object') {
-      const found = findTitle(value);
+      const found = deepFindTitle(value);
       if (found) return found;
     }
   }
@@ -44,13 +86,20 @@ function collectUrls(data, urls = [], path = '') {
 
   if (typeof data === 'string') {
     if (/^https?:\/\//i.test(data)) {
-      urls.push({ url: data, path: path.toLowerCase() });
+      urls.push({
+        url: data,
+        path: path.toLowerCase()
+      });
     }
+
     return urls;
   }
 
   if (Array.isArray(data)) {
-    data.forEach((item, index) => collectUrls(item, urls, `${path}.${index}`));
+    data.forEach((item, index) => {
+      collectUrls(item, urls, `${path}.${index}`);
+    });
+
     return urls;
   }
 
@@ -68,7 +117,16 @@ function pickBestAudioUrl(data) {
 
   if (!urls.length) return null;
 
-  const blocked = ['jpg', 'jpeg', 'png', 'webp', 'thumbnail', 'thumb', 'image', 'avatar'];
+  const blocked = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'thumbnail',
+    'thumb',
+    'image',
+    'avatar'
+  ];
 
   const filtered = urls.filter(item => {
     const raw = `${item.path} ${item.url}`.toLowerCase();
@@ -77,22 +135,82 @@ function pickBestAudioUrl(data) {
 
   const scored = filtered.map(item => {
     const raw = `${item.path} ${item.url}`.toLowerCase();
+
     let score = 0;
 
-    if (raw.includes('audio')) score += 50;
-    if (raw.includes('mp3')) score += 50;
-    if (raw.includes('m4a')) score += 40;
-    if (raw.includes('download')) score += 35;
+    if (raw.includes('mp3')) score += 70;
+    if (raw.includes('audio')) score += 60;
+    if (raw.includes('m4a')) score += 50;
+    if (raw.includes('download')) score += 40;
     if (raw.includes('dl')) score += 25;
     if (raw.includes('url')) score += 15;
     if (raw.includes('link')) score += 10;
 
-    return { ...item, score };
+    return {
+      ...item,
+      score
+    };
   });
 
   scored.sort((a, b) => b.score - a.score);
 
   return scored[0]?.url || null;
+}
+
+function pickThumbnail(data) {
+  const urls = collectUrls(data);
+
+  const found = urls.find(item => {
+    const raw = `${item.path} ${item.url}`.toLowerCase();
+
+    return (
+      raw.includes('thumbnail') ||
+      raw.includes('thumb') ||
+      raw.includes('image') ||
+      raw.includes('.jpg') ||
+      raw.includes('.jpeg') ||
+      raw.includes('.png') ||
+      raw.includes('.webp')
+    );
+  });
+
+  return found?.url || '';
+}
+
+async function getAudioFromApi(searchText) {
+  const url = `${API_URL}${encodeURIComponent(searchText)}`;
+  const data = await fetchJson(url);
+
+  const root = data.result || data.results || data.data || data;
+
+  const audioUrl =
+    root.download_url ||
+    root.downloadUrl ||
+    root.download ||
+    root.dlink ||
+    root.dl_link ||
+    root.mp3 ||
+    root.audio ||
+    root.url ||
+    root.link ||
+    pickBestAudioUrl(data);
+
+  const title =
+    deepFindTitle(data) ||
+    'Unknown YouTube Song';
+
+  const thumbnail =
+    root.thumbnail ||
+    root.thumb ||
+    root.image ||
+    pickThumbnail(data);
+
+  return {
+    audioUrl,
+    title,
+    thumbnail,
+    raw: data
+  };
 }
 
 module.exports = {
@@ -123,14 +241,15 @@ module.exports = {
         react: { text: '⌛', key: m.key }
       });
 
-      const isYoutubeLink = isYoutubeUrl(query);
+      const youtubeLink = isYoutubeUrl(query);
 
       let videoUrl = query;
       let title = 'Unknown YouTube Song';
       let thumbnail = '';
       let duration = '';
+      let apiSearchText = query;
 
-      if (!isYoutubeLink) {
+      if (!youtubeLink) {
         const search = await yts(query);
 
         if (!search?.videos?.length) {
@@ -155,6 +274,11 @@ module.exports = {
         title = video.title || title;
         thumbnail = video.thumbnail || '';
         duration = video.timestamp || '';
+
+        // Important fix:
+        // Use song title/query for this API, not only YouTube URL.
+        apiSearchText = title || query;
+
       } else {
         const videoId = getVideoId(query);
 
@@ -166,67 +290,57 @@ module.exports = {
             thumbnail = search.thumbnail || '';
             duration = search.timestamp || '';
             videoUrl = search.url || query;
+
+            // Important fix:
+            // Convert YouTube URL to title for ytplaymp3 API.
+            apiSearchText = title || query;
           }
         }
       }
 
-      const apiUrl = `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(videoUrl)}`;
-
-      const response = await fetch(apiUrl);
-      const textData = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      let data;
+      let apiResult;
 
       try {
-        data = JSON.parse(textData);
-      } catch {
-        throw new Error('Invalid JSON response from the API');
+        apiResult = await getAudioFromApi(apiSearchText);
+      } catch (firstError) {
+        console.log('First API attempt failed:', firstError.message);
+
+        // Fallback 1: try original user query
+        try {
+          apiResult = await getAudioFromApi(query);
+        } catch (secondError) {
+          console.log('Second API attempt failed:', secondError.message);
+
+          // Fallback 2: try YouTube URL
+          apiResult = await getAudioFromApi(videoUrl);
+        }
       }
 
-      const result = data.result || data.results || data.data || data;
-
-      const audioUrl =
-        result.download_url ||
-        result.downloadUrl ||
-        result.download ||
-        result.dlink ||
-        result.dl_link ||
-        result.mp3 ||
-        result.audio ||
-        result.url ||
-        result.link ||
-        pickBestAudioUrl(result);
+      const audioUrl = apiResult.audioUrl;
 
       title =
-        findTitle(result) ||
+        apiResult.title ||
         title ||
         'Unknown YouTube Song';
 
       thumbnail =
-        result.thumbnail ||
-        result.thumb ||
-        result.image ||
+        apiResult.thumbnail ||
         thumbnail ||
         '';
 
       if (!audioUrl) {
+        console.log('API response with no audio URL:', JSON.stringify(apiResult.raw, null, 2).slice(0, 2000));
+
         await client.sendMessage(m.chat, {
           react: { text: '❌', key: m.key }
         });
 
         return m.reply(`╭━〔 ❌ DOWNLOAD FAILED 〕━⬣
-┃ Unable to process your request.
+┃ API did not return a valid MP3 URL.
 ┃
-┃ ➤ Possible Reasons:
-┃   • Song not found
-┃   • Video unavailable
-┃   • API returned no audio URL
-┃
-┃ Please try again.
+┃ ➤ Try another song name.
+┃ ➤ Try artist name + song title.
+┃ ➤ The downloader API may be temporarily down.
 ╰━━━━━━━━━━━━━━━━━━⬣
 > 🎵 DmlDownloader`);
       }
@@ -252,10 +366,10 @@ module.exports = {
                   thumbnailUrl: thumbnail,
                   sourceUrl: videoUrl,
                   mediaType: 1,
-                  renderLargerThumbnail: true,
-                },
+                  renderLargerThumbnail: true
+                }
               }
-            : undefined,
+            : undefined
         },
         { quoted: m }
       );
@@ -272,7 +386,7 @@ module.exports = {
 ┃ 📀 Format: MP3
 ┃ 🎚️ Quality: 128kbps
 ╰━━━━━━━━━━━━━━━━━━⬣
-> ⚡ Powered by Dml`,
+> ⚡ Powered by Dml`
         },
         { quoted: m }
       );
@@ -282,9 +396,9 @@ module.exports = {
 
       await client.sendMessage(m.chat, {
         react: { text: '❌', key: m.key }
-      });
+      }).catch(() => {});
 
-      await m.reply(`╭━〔 🚨 PLAY ERROR 〕━⬣
+      return m.reply(`╭━〔 🚨 PLAY ERROR 〕━⬣
 ┃ Something went wrong while processing.
 ┃
 ┃ Error:
